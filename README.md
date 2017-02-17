@@ -7,7 +7,5 @@ POT Ratio study
 > 3. Compare the result in root histogram
 
 >> 1. Only HK case, Only KD case
-
 >> 2. HK + HK case, HK + KD case
-
 >> 3. HK ++ HK case, HK ++ KD case
