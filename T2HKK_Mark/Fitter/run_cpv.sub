@@ -1,0 +1,11 @@
+# Unix submit description file
+# run.sub --
+
+executable              = run_cpv.sh
+arguments               = $(Process) 
+log                     = run.log
+output                  = outfile.txt
+error                   = errors.txt
+should_transfer_files   = Yes
+when_to_transfer_output = ON_EXIT
+queue 101

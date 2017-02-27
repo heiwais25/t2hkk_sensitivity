@@ -1,0 +1,6 @@
+#Value Error     Emin  Emax  FluxMode  XsecMode  PIDType  PolarityMode Detectors  Type  Correlations
+#nue cross section
+1.0    0.0283    0.0   1.0   010100    011       11       11           11         0      1.0 -0.5  0.0
+1.0    0.0283    0.0   1.0   101000    011       11       11           11         0     -0.5  1.0  0.0
+#Matter density
+3.0    0.18      0.0   10.0  111111    111       11       11           10         3      0.0  0.0  1.0

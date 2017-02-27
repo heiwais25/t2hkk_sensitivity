@@ -9,3 +9,5 @@ POT Ratio study
 >> 1. Only HK case, Only KD case
 >> 2. HK + HK case, HK + KD case
 >> 3. HK ++ HK case, HK ++ KD case
+
+How we can see the effect of systematic parameter. Hello

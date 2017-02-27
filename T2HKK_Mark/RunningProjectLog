@@ -1,0 +1,120 @@
+---- 2017 - 02 - 27(Mon)
+
+---- 2017 - 02 - 21(Tue)
+run in pi/8, 7pi/8, 9pi/8, 15pi/8
+16:34 : only 1 HK detector case 
+16:38 : only 1 KD detector case -> 97 run stopped, so re-running 97
+16:42 : 1HK + 1KD detector case
+16:45 : 1HK + 1HK detector case
+
+---- 2017 - 02 - 17(Fri)
+Change POT ratio from x 0.5 to x 4.0 to get exclusion level from delta cp = 0
+we set 4 different delta cp value : 0, pi/2, pi, 3pi/2
+14:35 : only 1 KD detector case
+14:39 : only 1 HK detector case
+23:30 : 2HK detector case
+23:35 : HK + MT bisul case
+
+---- 2017 - 01 - 23(Mon)
+17:29 : Modify the cpViolationPOT.cc file(optimization)
+17:34 : mt_bisul + mt_bisul ... O
+21:38 : hk + mt_bisul
+22:22 : hk + hk
+22:25 : hk only
+22:30 : mt_bisul only
+
+
+
+2017-01-12
+18:46 ~ 23:12
+min2D octant violation KD only case (# of run : 10000run) 
+->systematic paramteter card is applied in wrong way(especially density systematics)
+
+23:08 ~ 00:06
+min2D octant violation KD only case (# of run : 10000run) 
+->Well done
+
+00:06 ~ 18:20
+min2D octant violation HK only case (# of run : 10000run) 
+->Well done.. But I overlapped the previous output file.
+output : min2D_oct_violation_1HK.root
+
+18:20 ~ 19:37
+min2D octant violation KD only case (# of run : 10000run) 
+->Well done. The result was not good..maybe we need to ran the other case in the Korean site
+output : min2D_oct_violation_MT_BISUL.root
+
+20:00 ~ 20:35w
+min2D octant violation KD 1p5 only case (# of run : 10000run) 
+->Well done. The result was not good..maybe we need to ran the other case in the Korean site
+output : min2D_oct_violation_KD_1p5.root
+
+---> Until this step, tphe HK only case has better sensitivity than the KD only case. Because there are flux drop due to longer distance.
+	
+15:11 ~ 16:11
+min2D octant violation HK + KD 1p5 case (# of run : 10000run) 
+To see how much there are difference
+->Well done. 
+output : min2D_oct_violation_both_KD_1p5.root
+
+16:11 ~ 17:24
+min2D octant violation HK + HK case (# of run : 10000run) 
+-> Well done
+output : min2D_oct_violation_both_2hk.root
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+2017-01-17
+17:24 ~ 17:50
+min2D octant violation HK + MT_BISUL case (# of run : 10000run) 
+- Well done
+output : min2D_oct_violation_both_MT_BISUL.root
+
+---> Every file has crushed...for the case of two detector
+
+17:58 ~ 20:09
+min2D octant violation HK + MT_BISUL case (# of run : 10000run) 
+---> In TTree setting, I put double value,, but I should have to put float value!!!!!!!!!
+
+20:09 ~ 2241
+min2D octant violation HK + MT_BISUL case (# of run : 10000run) 
+-> Well done
+output : min2D_oct_violation_both_MT_BISUL.root
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+2017-01-18
+~13:41
+min2D octant violation HK + HK case (# of run : 10000run) 
+---> Well done
+Let's download!!
+
+--- The result looks make sense. Let's do next calculation to show the systematic and statistics dependency
+-- e
+ 
+
+---- 2017 - 01 - 19
+16:38 : POT ratio test hk + mt_bisul -> Over (just for test)
+18:45 : POT ratio test hk + mt_bisul -> Done
+19:24 : POT ratio test hk + hk 	   ->  Done  --> Problem has occured (maybe density?)
+19:27 : POT ratio test only hk 	   ->  Done
+19:30 : POT ratio test only my_bisul -> Done
+
+---- 2017 - 01 - 20
+00:44 : POT ratio test hk + hk 	   -> Done... But the value was duplicated
+02:04 : POT ratio test hk + hk        -> 
+02:14 : POT ratio test hk + mt_bisul ->
+02:18 : POT ratio test only hk        ->
+02:21 : POT ratio test only mt_bisul ->
+
+
+
+04:00 : POT ratio test hk + hk 	-> o 
+04:06 : POT ratio test hk + mt_bisul   -> o 
+04:11 : POT ratio test only hk 	-> o
+04:16 : POT ratio test only mt_bisul  -> o
+
+We need to calculate cp precision
+
+-
+
