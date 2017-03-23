@@ -1,14 +1,3 @@
-// #define MakeFlux_cxx
-// #include <fstream>
-// #include <string>
-// #include <TH2.h>
-// #include <TStyle.h>
-// #include <TCanvas.h>
-// #include <TMath.h>
-// #include <TGraph.h>
-// #include "math.h"
-// #include "stdlib.h"
-// #include "TH1D.h"
 #include "MakeFlux.h"
 #include "StringParse.h"
 #include <iostream>
@@ -27,89 +16,63 @@ MakeFlux::MakeFlux(string fluxFile)
 	flavor[2] = "nue";
 	flavor[3] = "nuebar";
 
-	double * Angle;
+	double * carrier;
 
 	ifstream infile(fluxFile.c_str());
 	string line;
 	StringParse * strParse = new StringParse();
+
 	int Contents = 0;
 	int i = 0, length = 0;
-	double carrier[10];
-	int zenith_Count = 0;
-	int azimuth_Count = -1; // To start 0 when we use -1
-	int contents_Count = 0;
-	double tmpValue;
-
+	int zenith_Count  	= 0;
+	int azimuth_Count 	= -1; // To start 0 when we use -1
+	int contents_Count 	= 0;
+	int signal;
 	while(getline(infile, line))
 	{
-		if(line.at(0) == 'a')
+		
+		signal 	= strParse->NumberExtract(line);
+		carrier 	= strParse->NumberGet();
+		if(signal == 0)
 		{
-			
-			strParse->NumberExtract(line);
-			Angle = strParse->NumberGet();
-			cout << "Cosine Zenith angle and Azimuth angle" << endl;
-			cout << Angle[0] << "\t\t" << Angle[1] << "\t\t" << Angle[2] << "\t\t" << Angle[3] << endl;
-			Contents = 1;
-			azimuth_Count++;
+			// cout << "This line is blank line" << endl;
 		}
-		else if(Contents == 1)
+		else if(signal == 1)
 		{
-			length = 0;
-			stringstream linestream(line);
-			while(linestream >> tmpValue)
-			{
-				if(tmpValue != 0)
-				{
-					carrier[length] = tmpValue;
-					cout << carrier[length] << "\t\t";
-					length++;
-				}
-			}
-			if(length != 0)
-			{
-				// cout << carrier[0] << endl;
-				cout << endl;
-
-				hondaEnergy[zenith_Count][azimuth_Count][contents_Count] 	= carrier[0];
-				hondaNuMu[zenith_Count][azimuth_Count][contents_Count]	= carrier[1];
-				hondaNuMuBar[zenith_Count][azimuth_Count][contents_Count] 	= carrier[2];
-				hondaNuE[zenith_Count][azimuth_Count][contents_Count] 		= carrier[3];
-				hondaNuEBar[zenith_Count][azimuth_Count][contents_Count]	= carrier[4];
-				// cout << hondaEnergy[zenith_Count][azimuth_Count][contents_Count] << endl;
-				contents_Count++;
-
-			}
+			azimuth_Count++;
+			contents_Count = 0;
 
 			if(azimuth_Count == 12) // Initializing
 			{
-				azimuth_Count 	= 0;
-				contents_Count 	= 0;
+				azimuth_Count = 0;
 				zenith_Count++;
 			}
+		}	
+		else if(signal == 2)
+		{	
+			// zenith_Count 		= 0 : 0.90 ~ 1.00 / 19 : -1.0 ~ -0.90
+			// azimuth_Count 		= 0 : 0 ~ 30 / 11 : 330 ~ 360
+			// contents_Count 	= from 0 to 100 (total line is 101)
+			hondaEnergy[zenith_Count][azimuth_Count][contents_Count] 	= carrier[0];
+			hondaNuMu[zenith_Count][azimuth_Count][contents_Count]	= carrier[1];
+			hondaNuMuBar[zenith_Count][azimuth_Count][contents_Count] 	= carrier[2];
+			hondaNuE[zenith_Count][azimuth_Count][contents_Count] 		= carrier[3];
+			hondaNuEBar[zenith_Count][azimuth_Count][contents_Count]	= carrier[4];
+			contents_Count++;			
 		}
-		// i++;
-		// if(i == 10000)
-		// {
-		// 	break;
-		// }
 	}
-
-	cout << endl;
-	int check = 5;
+	int check = 19;
+	int check2 = 10;
 	for(int i = 0; i < 101; i++)
 	{
-		cout << hondaEnergy[check][0][i] << "\t" << hondaNuMu[check][0][i] << "\t" << hondaNuMuBar[check][0][i] 
-		<< "\t" << hondaNuE[check][0][i] << "\t" << hondaNuEBar[check][0][i] << endl;
+		cout << hondaEnergy[check][check2][i] << "\t" << hondaNuMu[check][check2][i] << "\t" << hondaNuMuBar[check][check2][i] 
+		<< "\t" << hondaNuE[check][check2][i] << "\t" << hondaNuEBar[check][check2][i] << endl;
 
 	}
-
-
 }
 
 void MakeFlux::Test()
 {
-	// cout << "Hello" << endl;
-	// cout << flavor[0] << endl;
 }
 
 

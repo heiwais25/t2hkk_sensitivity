@@ -15,8 +15,14 @@ using namespace std;
  */
 StringParse::StringParse()
 {
+	
 }
 
+/**
+ * [StringParse::NumberExtract description]
+ * @param  str [description]
+ * @return     0 : Blank / 1 : Header / 2 : Contents
+ */
 char StringParse::NumberExtract(string str)
 {
 	if(str.at(0) == 'a')
@@ -93,24 +99,26 @@ char StringParse::HeaderExtract(string str)
 
 char StringParse::ContentsExtract(string str)
 {
-	int length = 0;
+	int length;
 	double tmpValue;
 	stringstream linestream(str);
+	length = 0;
 	while(linestream >> tmpValue)
 	{
 		if(tmpValue != 0)
 		{
 			value[length] = tmpValue;
-			cout << value[length] << "\t\t";
+			// cout << value[length] << "\t\t";
 			length++;
 		}
 	}
 	if(length == 0)
 	{
+		// cout << "end 0" << endl;
 		return 0;
 	}
 	else
 	{
-		return 1;
+		return 2;
 	}
 }

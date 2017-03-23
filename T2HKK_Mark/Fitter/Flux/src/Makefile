@@ -4,9 +4,11 @@ OBJS	= $(SRCS:.cc=.o)
 TARGET	= out
 
 all: $(TARGET)
+
+$(TARGET): $(OBJS)
 	$(CXX) -o $(TARGET) $(OBJS) 
 
-$(TARGET):
+$(OBJS): $(SRCS)
 	$(CXX) -c $(SRCS)
 
 clean:
