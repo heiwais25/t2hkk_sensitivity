@@ -1,12 +1,12 @@
 #define MakeHistograms_cxx
 #include "MakeHistograms.h"
-#include <fstream>
-#include <string>
-#include <TH2.h>
-#include <TStyle.h>
-#include <TCanvas.h>
-#include <TMath.h>
-#include <TGraph.h>
+// #include <fstream>
+// #include <string>
+// #include <TH2.h>
+// #include <TStyle.h>
+// #include <TCanvas.h>
+// #include <TMath.h>
+// #include <TGraph.h>
 #include "math.h"
 #include "stdlib.h"
 #include "TH1D.h"
@@ -218,6 +218,9 @@ void MakeHistograms::BuildHistograms(SystParams *systParams){
 }
              
              
+
+
+
 
 
 void MakeHistograms::BuildHistograms(){
@@ -540,6 +543,7 @@ void MakeHistograms::GetPredictions(TH1D **hists1Re, TH1D **hists1Rmu, SystParam
          gre->SetPoint(l-1,hists1Re[i]->GetXaxis()->GetBinCenter(l)*escale,hists1Re[i]->GetBinContent(l)/(hists1Re[i]->GetXaxis()->GetBinWidth(l)*escale));
        for(int l=1; l<=hists1Re[i]->GetNbinsX(); l++){
          tmp = gre->Eval(hists1Re[i]->GetXaxis()->GetBinCenter(l),0,"S");
+         std::cout << "tmp value" << tmp << std::endl;
          if(tmp<0.) tmp = 0.;
          hists1Re[i]->SetBinContent(l,tmp*hists1Re[i]->GetXaxis()->GetBinWidth(l));
        } 
@@ -564,6 +568,12 @@ void MakeHistograms::GetPredictions(TH1D **hists1Re, TH1D **hists1Rmu, SystParam
 
 }
 
+/**
+ * @brief It will build all of the 2D(true energy, reconstructed energy)
+ * @details It will build all of the 2D(true energy, reconstructed energy) with whatever systematic parameter settins are in the systParams object
+ * @param systParams the pointer that contain information of systematic parameter
+ * @date       2017-02-27
+ */
 void MakeHistograms::BuildHistogramsSystOnly(SystParams *systParams ){
 
   //Make histograms with systematics included
@@ -664,6 +674,15 @@ void MakeHistograms::BuildHistogramsSystOnly(SystParams *systParams ){
 
 }
 
+/**
+ * @brief This returns a pointter to the 2D histogram. 
+ * @details There is a histogram for each neutrino flavor, horn polarity, reaction mode, and selection type. They can be specified with the enumerated types
+ * @param  nuflavor     Flavor of neutrino : {NUMU, NUMUBAR, NUE, NUEBAR, NUMUNUE, NUMUBARNUEBAR}
+ * @param  reactcode    Reaction Channel : {CCQE, CCnQE, NC}
+ * @param  hornpolarity Horn polarity(neutrino or anti-neutrino) : {FHC, RHC}
+ * @param  sample       selection of one ring of muon or electron : {ONERINGMU, ONERINGE}
+ * @return              pointer to the 2D histogram
+ */
 TH2D* MakeHistograms::GetWeightedTemplate(FLAVOR nuflavor, RCODE reactcode, POLARITY hornpolarity, SELECTION sample){
 
   if(sample==ONERINGMU)
