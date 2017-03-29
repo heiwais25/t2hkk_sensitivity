@@ -84,12 +84,12 @@ MakeFlux::MakeFlux(string fluxFile)
  * @details 		1) BilinearInterpolation
  * @param InterpolationLevel [description]
  */
-double MakeFlux::InterpolateFlux(int InterpolationLevel, double Energy, double CosZenith)
+double MakeFlux::InterpolateFlux(int InterpolationLevel, double Energy, double CosZenith, int AzimuthAngle)
 {
 	if(InterpolationLevel == 1)
 	{
 		cout << "Bilinear interpolation" << endl;
-		BilinearInterpolation(Energy, CosZenith);
+		BilinearInterpolation(Energy, CosZenith, AzimuthAngle);
 	}
 	else if(InterpolationLevel == 2)
 	{
@@ -107,7 +107,7 @@ double MakeFlux::InterpolateFlux(int InterpolationLevel, double Energy, double C
 	return 0;
 }
 
-double MakeFlux::BilinearInterpolation(double Energy, double CosZenith)
+double MakeFlux::BilinearInterpolation(double Energy, double CosZenith, int AzimuthAngle)
 {
 	// We need to consider when the value is in boundary
 	// After find the binning of each value, we need to make bilinearinterpolation
@@ -115,15 +115,15 @@ double MakeFlux::BilinearInterpolation(double Energy, double CosZenith)
 	FindProperBin(Energy, CosZenith, &energyNBin, &cosZenithNBin);
 	cout << energyNBin << "\t" << cosZenithNBin << endl;
 
-	for(int i = 0; i < Azimuth_Length; i++)
-	{
-		cout << "azimuth angle : \t" << i * 30 << "\t" <<
-		 "energy : \t" << hondaEnergy[cosZenithNBin][i][energyNBin] << "\t" <<
-		 "numu flux : \t" << hondaNuMu[cosZenithNBin][i][energyNBin] << "\t" <<
-		 "numubar flux : \t" << hondaNuMuBar[cosZenithNBin][i][energyNBin] << "\t" << 
-		 "nue flux : \t" << hondaNuE[cosZenithNBin][i][energyNBin] << "\t" <<
-		 "nuebar flux : \t" << hondaNuEBar[cosZenithNBin][i][energyNBin] << endl;
-	}
+	// for(int i = 0; i < Azimuth_Length; i++)
+	// {
+	// 	cout << "azimuth angle : \t" << i * 30 << "\t" <<
+	// 	 "energy : \t" << hondaEnergy[cosZenithNBin][i][energyNBin] << "\t" <<
+	// 	 "numu flux : \t" << hondaNuMu[cosZenithNBin][i][energyNBin] << "\t" <<
+	// 	 "numubar flux : \t" << hondaNuMuBar[cosZenithNBin][i][energyNBin] << "\t" << 
+	// 	 "nue flux : \t" << hondaNuE[cosZenithNBin][i][energyNBin] << "\t" <<
+	// 	 "nuebar flux : \t" << hondaNuEBar[cosZenithNBin][i][energyNBin] << endl;
+	// }
 
 	                    
 	/*=====================================================================================================================================
@@ -133,21 +133,21 @@ double MakeFlux::BilinearInterpolation(double Energy, double CosZenith)
 	 =====================================================================================================================================*/
 	double eBin1, eBin2; // Energy bin between energy range
 	double cBin1, cBin2; // Cosine Zenith angle bin between cosine range
-	int aValue = 1; // Azimuth value(example)
+	int aValue = AzimuthAngle; // Azimuth value(example)
 
 	// Maybe we need to set in logarithm?
 
 	eBin1 = Energy - hondaEnergy[cosZenithNBin][aValue][energyNBin];
 	eBin2 = hondaEnergy[cosZenithNBin][aValue][energyNBin+1] - Energy;
 
-	cout << eBin1 << endl;
-	cout << eBin2 << endl;
+	// cout << eBin1 << endl;
+	// cout << eBin2 << endl;
 
 	cBin1 = cosineZenith[cosZenithNBin] - CosZenith;
 	cBin2 = CosZenith - cosineZenith[cosZenithNBin + 1];
 
-	cout << cBin1 << endl;
-	cout << cBin2 << endl;
+	// cout << cBin1 << endl;
+	// cout << cBin2 << endl;
 	
 	if(eBin1 < 0 || eBin2 < 0)
 	{
@@ -188,7 +188,6 @@ double MakeFlux::BilinearInterpolation(double Energy, double CosZenith)
   		"NuEBar : " << fluxNuEBar << endl;
 
 }
-
 
 void MakeFlux::FindProperBin(double energy, double cosZenith, int * energyNBin, int * cosZenithNBin)
 {
@@ -240,9 +239,13 @@ void MakeFlux::FindProperBin(double energy, double cosZenith, int * energyNBin, 
 	}
 	* energyNBin = checkEnergyBin;
 	* cosZenithNBin = checkCosZenithBin;
-	cout << "Energy : " << energy << "\t" << checkEnergyBin << endl;
-	cout << "CosZenith : " << cosZenith << "\t" << checkCosZenithBin << endl;
+	// cout << "Energy : " << energy << "\t" << checkEnergyBin << endl;
+	// cout << "CosZenith : " << cosZenith << "\t" << checkCosZenithBin << endl;
 }
+
+#define azNumBin 12
+#define czNumBin 20
+#define _USE_MATH_DEFINES
 
 int main(void)
 {
@@ -250,7 +253,39 @@ int main(void)
 	string cardFile = "../resources/honda-2015-spl-solmin.d";
 	MakeFlux * flux = new MakeFlux(cardFile);
 	// flux->Test();
-	flux->InterpolateFlux(1, 0.1, 0.95  );
+	
+	
+	
+	// flux->InterpolateFlux(1, 0.1, 0.95);
+	
+
+	double czStart = 1.0;
+	double czEnd = 0.0;
+	double czBinWidth;
+	czBinWidth = (czStart - czEnd) / double(czNumBin);
+
+	double czBin[czNumBin];
+	for(int i = 0; i < czNumBin; i++)
+	{
+		czBin[i] = czStart - czBinWidth * (double)i;
+		cout << czBin[i] << endl;
+	}
+	flux->InterpolateFlux(1, 0.1, 0.85, 0);
+
+	// unit length to calculate unit area
+	double dE = 0.05; // 0.05 GeV
+	double dCZ = czBinWidth;
+	double dAZ = (2*M_PI)/double(azNumBin);
+
+	cout << dE << "\t" << dCZ << "\t" << dAZ << endl;
+	double fluxValue;
+	for(int i = 0; i < azNumBin; i++)
+	{
+		fluxValue = flux->InterpolateFlux(1, 0.15, 0.95, i);
+		// cout << fluxValue << endl;
+	}
+	// EnergyBin[]
+
 	return 0;
 }
 

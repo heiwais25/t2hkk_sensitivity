@@ -1,12 +1,12 @@
 #define MakeHistograms_cxx
 #include "MakeHistograms.h"
-// #include <fstream>
-// #include <string>
-// #include <TH2.h>
-// #include <TStyle.h>
-// #include <TCanvas.h>
-// #include <TMath.h>
-// #include <TGraph.h>
+#include <fstream>
+#include <string>
+#include <TH2.h>
+#include <TStyle.h>
+#include <TCanvas.h>
+#include <TMath.h>
+#include <TGraph.h>
 #include "math.h"
 #include "stdlib.h"
 #include "TH1D.h"

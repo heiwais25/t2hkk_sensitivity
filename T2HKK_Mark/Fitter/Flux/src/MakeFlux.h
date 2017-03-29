@@ -19,8 +19,8 @@ class MakeFlux
 {
 	public:
 		MakeFlux(string fluxFile);
-		double InterpolateFlux(int InterpolationLevel, double Energy, double CosZenith);
-		double BilinearInterpolation(double Energy, double CosZenith);
+		double InterpolateFlux(int InterpolationLevel, double Energy, double CosZenith, int AzimuthAngle);
+		double BilinearInterpolation(double Energy, double CosZenith, int AzimuthAngle);
 		void FindProperBin(double energy, double cosineZenith, int * energyNBin, int * cosZenithNBin);
 
 
