@@ -1,6 +1,6 @@
 CXX=g++
 
-SRCS = $(wildcard *.cc)
+SRCS 	= $(wildcard *.cc)
 OBJS	= $(SRCS:.cc=.o)
 TARGET	= out
 

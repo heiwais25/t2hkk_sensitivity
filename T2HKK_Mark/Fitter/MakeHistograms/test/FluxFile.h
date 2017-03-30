@@ -38,8 +38,10 @@ class FluxFile
 		double GetBaseline(){return baseline;};
 		double GetDensity(){return density;};
 
-		TH2D * Getraw1Re(int polarity, int flavor, int interaction){return raw1Re[polarity][flavor][interaction];};
-		TH2D * Getraw1Rmu(int polarity, int flavor, int interaction){return raw1Rmu[polarity][flavor][interaction];};
+		TH2D ** Getraw1Re(){return raw1Re;};
+		TH2D ** Getraw1Rmu(){return raw1Rmu;};
+		// TH2D ** Getraw1Re(int polarity, int flavor, int interaction){return raw1Re;};
+		// TH2D ** Getraw1Rmu(int polarity, int flavor, int interaction){return raw1Rmu;};
 		TH1D * Getpred1Re(int polarity, int flavor, int interaction){return pred1Re[polarity][flavor][interaction];};
 		TH1D * Getpred1Rmu(int polarity, int flavor, int interaction){return pred1Rmu[polarity][flavor][interaction];};
 		TH2D * Getraw1ReOsc(int polarity, int flavor, int interaction){return raw1ReOsc[polarity][flavor][interaction];};

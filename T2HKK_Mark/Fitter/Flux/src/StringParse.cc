@@ -1,4 +1,4 @@
-#include "MakeFlux.h"
+#include "MakeAtmFlux.h"
 #include "StringParse.h"
 #include <iostream>
 #include <fstream>

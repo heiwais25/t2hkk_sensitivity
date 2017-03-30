@@ -1,15 +1,38 @@
-CXX 		= g++
-SRCS	= $(wildcard *.cc)
-OBJS	= $(SRCS:.cc=.o)
-TARGET	= out
+CXX 			= g++
+AR 			= ar
+LD_SHARED 	= g++
 
-all: $(TARGET)
+ROOTLIBS   	= -Wl,-rpath,$(shell root-config --libdir) $(shell root-config --libs) -lThread 
+ROOTCFLAGS 	= $(shell root-config --cflags)
+INCDIR  		= -I../../include 
+LIBDIR  		= ../../lib
 
-$(TARGET): $(OBJS)
-	$(CXX) -o $(TARGET) $(OBJS) 
+CXXFLAGS   	= -Wall -mtune=core2 -O3 -g -fPIC -fopenmp $(ROOTCFLAGS) $(INCDIR)
+SYSLIB     	= -lm -lg2c
+LINK_ARGS_BIN = $(SYSLIB) $(ROOTLIBS) $(LIBDIR)
+SOFLAGS 		= -shared -Wl,-export-dynamic $(ROOTCFLAGS)
+LDFLAGS 		=
+ARFLAGS 		= rcsv
 
-$(OBJS): $(SRCS)
-	$(CXX) -c $(SRCS)
+
+%.o:%.cc
+	g++ -c $(CXXFLAGS) $<
+
+libMakeAtmFlux: libMakeAtmFlux.a libStringParse.a $(LIBDIR)/libMakeAtmFlux.so
+
+libMakeAtmFlux.a: MakeAtmFlux.o
+	$(AR) $(ARFLAGS) $@ $^
+
+libStringParse.a: StringParse.o
+	$(AR) $(ARFLAGS) $@ $^
+
+
+$(LIBDIR)/libMakeAtmFlux.so: MakeAtmFlux.o StringParse.o
+	$(LD_SHARED) -shared -Wl,-soname,$@,-export-dynamic $(ROOTCFLAGS) -o $@ $^
+
 
 clean:
-	rm -f $(TARGET) *.o
+	rm -fv *.o lib*
+
+distclean:
+	rm -fv *~ *.o *.so *.a lib*
