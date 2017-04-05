@@ -54,10 +54,10 @@ MakeAtmFlux::MakeAtmFlux(string fluxFile)
 			// azimuth_Count 		= 0 : 0 ~ 30 / 11 : 330 ~ 360
 			// contents_Count 	= from 0 to 100 (total line is 101)
 			hondaEnergy[zenith_Count][azimuth_Count][contents_Count] 	= carrier[0];
-			hondaNuMu[zenith_Count][azimuth_Count][contents_Count]	= carrier[1];
-			hondaNuMuBar[zenith_Count][azimuth_Count][contents_Count] 	= carrier[2];
-			hondaNuE[zenith_Count][azimuth_Count][contents_Count] 		= carrier[3];
-			hondaNuEBar[zenith_Count][azimuth_Count][contents_Count]	= carrier[4];
+			hondaNuMu[zenith_Count][azimuth_Count][contents_Count] 	= carrier[1] / pow(10,4);
+			hondaNuMuBar[zenith_Count][azimuth_Count][contents_Count] 	= carrier[2] / pow(10,4);
+			hondaNuE[zenith_Count][azimuth_Count][contents_Count] 		= carrier[3] / pow(10,4);
+			hondaNuEBar[zenith_Count][azimuth_Count][contents_Count] 	= carrier[4] / pow(10,4);
 			contents_Count++;			
 		}
 	}
@@ -66,15 +66,15 @@ MakeAtmFlux::MakeAtmFlux(string fluxFile)
 	{
 		cosineZenith[i] = 0.95 - 0.10 * (double)i;
 	}
-	int check = 19;
-	int check2 = 10;
-	for(int i = 0; i < 101; i++)
-	{
-		// cout << log10(hondaEnergy[check][check2][i]) << "\t" << hondaNuMu[check][check2][i] << "\t" << hondaNuMuBar[check][check2][i] 
-		// << "\t" << hondaNuE[check][check2][i] << "\t" << hondaNuEBar[check][check2][i] << endl;
-		// cout << log10(hondaEnergy[check][check2][i]) << "\t" << log10(hondaNuMu[check][check2][i]) << endl;
+	// int check = 19;
+	// int check2 = 10;
+	// for(int i = 0; i < 101; i++)
+	// {
+	// 	// cout << log10(hondaEnergy[check][check2][i]) << "\t" << hondaNuMu[check][check2][i] << "\t" << hondaNuMuBar[check][check2][i] 
+	// 	// << "\t" << hondaNuE[check][check2][i] << "\t" << hondaNuEBar[check][check2][i] << endl;
+	// 	// cout << log10(hondaEnergy[check][check2][i]) << "\t" << log10(hondaNuMu[check][check2][i]) << endl;
 
-	}
+	// }
 	
 }
 
@@ -193,13 +193,14 @@ double MakeAtmFlux::BilinearInterpolation(double Energy, double CosZenith, int A
   				+ (eRatio1 * hondaNuE[cosZenithNBin+1][aValue][energyNBin + 1] + eRatio2 * hondaNuE[cosZenithNBin+1][aValue][energyNBin]) * cRatio1;
   	fluxNuEBar = (eRatio1 * hondaNuEBar[cosZenithNBin][aValue][energyNBin + 1] + eRatio2 * hondaNuEBar[cosZenithNBin][aValue][energyNBin]) * cRatio2
   				+ (eRatio1 * hondaNuEBar[cosZenithNBin+1][aValue][energyNBin + 1] + eRatio2 * hondaNuEBar[cosZenithNBin+1][aValue][energyNBin]) * cRatio1;
-
+  	// if((CosZenith == 0.65)&&(Energy == 0.10))
+  	// {
   	// cout << "This is certain flux in set energy, cosine \t" <<
   	// 	"NuMu : " << fluxNuMu << "\t"
   	// 	"NuMuBar : " << fluxNuMuBar << "\t"
   	// 	"NuE : " << fluxNuE << "\t"
   	// 	"NuEBar : " << fluxNuEBar << endl;
-  	
+  	// }
   	switch(flavor)
   	{
   		case 0:

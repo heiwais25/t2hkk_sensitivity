@@ -39,7 +39,8 @@ AtmFluxFile::AtmFluxFile(char * cardFile, ProbWrapper *prob, int detid)
 	cout << line.c_str() << endl;
 
 	// fflux = new TFile(line.c_str(),"READ");
-	fflux = new TFile("../../inputs/flux_weights_1p5_1100km.root","READ");
+	// fflux = new TFile("../../inputs/flux_weights_1p5_1100km.root","READ");
+	fflux = new TFile("../../inputs/flux_weights_2p5_295km.root","READ");
 	// fflux = new TFile();
 	std::cout << "test" << std::endl;
 	fluxRatios[0][0] = (TH1D*)fflux->Get("weight_numode_numu"); 
@@ -51,7 +52,16 @@ AtmFluxFile::AtmFluxFile(char * cardFile, ProbWrapper *prob, int detid)
 	fluxRatios[1][2] = (TH1D*)fflux->Get("weight_anumode_nue"); 
 	fluxRatios[1][3] = (TH1D*)fflux->Get("weight_anumode_nueb");
 
-	  cout << "Load Raw histograms" << std::endl;
+	fluxSK[0][0] = (TH1D *)fflux->Get("flux_numode_numu");
+	fluxSK[0][1] = (TH1D *)fflux->Get("flux_numode_numub");
+	fluxSK[0][2] = (TH1D *)fflux->Get("flux_numode_nue");
+	fluxSK[0][3] = (TH1D *)fflux->Get("flux_numode_nueb");
+	fluxSK[1][0] = (TH1D *)fflux->Get("flux_anumode_numu");
+	fluxSK[1][1] = (TH1D *)fflux->Get("flux_anumode_numub");
+	fluxSK[1][2] = (TH1D *)fflux->Get("flux_anumode_nue");
+	fluxSK[1][3] = (TH1D *)fflux->Get("flux_anumode_nueb");
+
+	cout << "Load Raw histograms" << std::endl;
 
 	for(int i=0; i<2; i++)
 	{
@@ -69,6 +79,14 @@ AtmFluxFile::AtmFluxFile(char * cardFile, ProbWrapper *prob, int detid)
 			raw1Rmu[i][j][0] = (TH2D*)fraw[i][j]->Get("enu_erec_1Rmu_CCQE");
 			raw1Rmu[i][j][1] = (TH2D*)fraw[i][j]->Get("enu_erec_1Rmu_CCnQE");
 			raw1Rmu[i][j][2] = (TH2D*)fraw[i][j]->Get("enu_erec_1Rmu_NC");
+
+			raw1ReSave[i][j][0] = (TH2D*)raw1Re[i][j][0]->Clone();
+			raw1ReSave[i][j][1] = (TH2D*)raw1Re[i][j][1]->Clone();
+			raw1ReSave[i][j][2] = (TH2D*)raw1Re[i][j][2]->Clone();
+			raw1RmuSave[i][j][0] = (TH2D*)raw1Rmu[i][j][0]->Clone();
+			raw1RmuSave[i][j][1] = (TH2D*)raw1Rmu[i][j][1]->Clone();
+			raw1RmuSave[i][j][2] = (TH2D*)raw1Rmu[i][j][2]->Clone();
+
 			raw1ReOsc[i][j][0] = (TH2D*)raw1Re[i][j][0]->Clone(Form("raw1ReOsc_%d%d0",i,j));
 			raw1ReOsc[i][j][1] = (TH2D*)raw1Re[i][j][1]->Clone(Form("raw1ReOsc_%d%d1",i,j));
 			raw1ReOsc[i][j][2] = (TH2D*)raw1Re[i][j][2]->Clone(Form("raw1ReOsc_%d%d2",i,j));
@@ -77,6 +95,8 @@ AtmFluxFile::AtmFluxFile(char * cardFile, ProbWrapper *prob, int detid)
 			raw1RmuOsc[i][j][2] = (TH2D*)raw1Rmu[i][j][2]->Clone(Form("raw1RmuOsc_%d%d2",i,j));
 		}
 	}  
+
+
 
 	char pol[2][10] = {"FHC","RHC"};
 	char flav[6][20] = {"numu","numub","nue","nueb","numuxnue","numubxnueb"}; 
@@ -92,6 +112,10 @@ AtmFluxFile::AtmFluxFile(char * cardFile, ProbWrapper *prob, int detid)
 				pred1Re[i][j][k] = new TH1D(Form("pred1Re_%s_%s_%s",pol[i],flav[j],imode[k]),"",blah->GetNbins(),blah->GetXbins()->GetArray());
 				blah = raw1Rmu[i][j][k]->GetYaxis();
 				pred1Rmu[i][j][k] = new TH1D(Form("pred1Rmu_%s_%s_%s",pol[i],flav[j],imode[k]),"",blah->GetNbins(),blah->GetXbins()->GetArray());
+				// for(int count = 0; count < pred1Re[i][j][k]->GetXaxis()->GetNbins(); count++)
+				// {
+				// 	// cout << pred1Rmu[i][j][k]->GetBinContent(count) << endl;
+				// }
 			}
 		}
 	}  
@@ -122,8 +146,18 @@ AtmFluxFile::~AtmFluxFile()
 void AtmFluxFile::ApplyFluxWeights(double czBin, int azBin)
 {
 	interpolateMode = 1; // Bilinear
-	// interpolateMode = 2; // Bicubic(need to be upgrade)
-	
+	for(int i = 0; i < 2; i++) // Initialize each raw file because we need to calculate in each angular bin
+	{
+		for(int j = 0; j < 6; j++)
+		{
+			raw1Re[i][j][0] = (TH2D*)raw1ReSave[i][j][0]->Clone();
+			raw1Re[i][j][1] = (TH2D*)raw1ReSave[i][j][1]->Clone();
+			raw1Re[i][j][2] = (TH2D*)raw1ReSave[i][j][2]->Clone();
+			raw1Rmu[i][j][0] = (TH2D*)raw1RmuSave[i][j][0]->Clone();
+			raw1Rmu[i][j][1] = (TH2D*)raw1RmuSave[i][j][1]->Clone();
+			raw1Rmu[i][j][2] = (TH2D*)raw1RmuSave[i][j][2]->Clone();
+		}
+	}
 	for(int i=0; i<2; i++) 
 	{	
 		if(i == 0)
@@ -133,38 +167,28 @@ void AtmFluxFile::ApplyFluxWeights(double czBin, int azBin)
 				int flavId = j%4;
 				for(int k=0; k<3; k++)
 				{
-
 					for(int xi=1; xi<=raw1Re[i][j][k]->GetNbinsX()+1; xi++)
 					{
 						double enu = raw1Re[i][j][k]->GetXaxis()->GetBinCenter(xi);
 						double ebin = raw1Re[i][j][k]->GetXaxis()->GetBinWidth(xi);
-						double fbin = atmFlux->InterpolateFlux(interpolateMode, enu, czBin, azBin, flavId);
-						double crossSection = atmFlux->GetCrossSection(enu, flavId);
-						// cout << "energy : " << enu << endl;
-						// cout << "flux : " << fbin << endl;
-						// cout << "ebin : " << ebin << endl;
-						// cout << "cross section : " << crossSection << endl;
-						// double fweight = fluxRatios[i][flavId]->GetBinContent(fbin);
+						double fAtm = atmFlux->InterpolateFlux(interpolateMode, enu, czBin, azBin, flavId)  * ebin;
+						int fSKbin = fluxSK[i][flavId]->FindBin(enu);
+						double fSK = fluxSK[i][flavId]->GetBinContent(fSKbin);
 						for(int yi=1; yi<=raw1Re[i][j][k]->GetNbinsY()+1; yi++)
 						{
-							// cout << raw1Re[i][j][k]->GetBinContent(xi,yi) << endl;
-							// raw1Re[i][j][k]->SetBinContent(xi,yi,raw1Re[i][j][k]->GetBinContent(xi,yi) * fbin * ebin * (massWeight * 22.5) * crossSection * pow(10,9) / 18.0 * 6.02 * pow(10,31) * 3.0);
-							raw1Re[i][j][k]->SetBinContent(xi,yi,raw1Re[i][j][k]->GetBinContent(xi,yi) * mcWeights[i][j] * fbin * ebin * (massWeight * 22.5) * crossSection * pow(10,9) / 18.0 * 6.02 * pow(10,31) * 3.0);
-							// cout << raw1Re[i][j][k]->GetBinContent(xi,yi) * fbin * ebin * (massWeight * 22.5) * crossSection * pow(10,9) / 18.0 * 6.02 * pow(10,31) * 3.0 << endl;
+							raw1Re[i][j][k]->SetBinContent(xi,yi,raw1Re[i][j][k]->GetBinContent(xi,yi) * mcWeights[i][j] * (fAtm / fSK) * massWeight * 315360000 * cosineZenithBin * AzimuthBin) ;
 						}
 					}
-				
-
 					for(int xi=1; xi<=raw1Rmu[i][j][k]->GetNbinsX()+1; xi++)
 					{
 						double enu = raw1Rmu[i][j][k]->GetXaxis()->GetBinCenter(xi);
 						double ebin = raw1Rmu[i][j][k]->GetXaxis()->GetBinWidth(xi);
-						double fbin = atmFlux->InterpolateFlux(interpolateMode, enu, czBin, azBin, flavId);
-						double crossSection = atmFlux->GetCrossSection(enu, flavId);
+						double fAtm = atmFlux->InterpolateFlux(interpolateMode, enu, czBin, azBin, flavId) * ebin;
+						int fSKbin = fluxSK[i][flavId]->FindBin(enu);
+						double fSK = fluxSK[i][flavId]->GetBinContent(fSKbin);
 						for(int yi=1; yi<=raw1Rmu[i][j][k]->GetNbinsY()+1; yi++)
 						{
-							// raw1Rmu[i][j][k]->SetBinContent(xi,yi,raw1Rmu[i][j][k]->GetBinContent(xi,yi) * fbin * ebin *mcWeights[i][j] * massWeight * potWeight[i]);
-							raw1Rmu[i][j][k]->SetBinContent(xi,yi,raw1Re[i][j][k]->GetBinContent(xi,yi) * mcWeights[i][j] * fbin * ebin * (massWeight * 22.5) * crossSection * pow(10,9) / 18.0 * 6.02 * pow(10,31) * 3.0);
+							raw1Rmu[i][j][k]->SetBinContent(xi,yi,raw1Rmu[i][j][k]->GetBinContent(xi,yi) * mcWeights[i][j] * (fAtm / fSK) * massWeight * 315360000 * cosineZenithBin * AzimuthBin);
 						}
 					}
 				}
@@ -182,7 +206,7 @@ void AtmFluxFile::ApplyFluxWeights(double czBin, int azBin)
 					{
 						for(int yi=1; yi<=raw1Re[i][j][k]->GetNbinsY()+1; yi++)
 						{
-							raw1Re[i][j][k]->SetBinContent(xi,yi,raw1Re[i][j][k]->GetBinContent(xi,yi)*0);
+							raw1Re[i][j][k]->SetBinContent(xi,yi,raw1Re[i][j][k]->GetBinContent(xi,yi) * 0);
 						}
 					}
 				
@@ -191,7 +215,7 @@ void AtmFluxFile::ApplyFluxWeights(double czBin, int azBin)
 					{
 						for(int yi=1; yi<=raw1Rmu[i][j][k]->GetNbinsY()+1; yi++)
 						{
-							raw1Rmu[i][j][k]->SetBinContent(xi,yi,raw1Rmu[i][j][k]->GetBinContent(xi,yi)*0);
+							raw1Rmu[i][j][k]->SetBinContent(xi,yi,raw1Rmu[i][j][k]->GetBinContent(xi,yi) * 0);
 						}
 					}
 				}	
@@ -479,6 +503,84 @@ void AtmFluxFile::ApplyOscillations()
 
 }
 
+void AtmFluxFile::ApplyOscillations(double cz)
+{	
+	// cout << "oscillation!!" << endl;
+	double *weightmm = new double[raw1Re[0][0][0]->GetNbinsX()];
+	double *weightmbmb = new double[raw1Re[0][0][0]->GetNbinsX()];
+	double *weightee = new double[raw1Re[0][0][0]->GetNbinsX()];
+	double *weightebeb = new double[raw1Re[0][0][0]->GetNbinsX()];
+	double *weightme = new double[raw1Re[0][0][0]->GetNbinsX()];
+	double *weightmbeb = new double[raw1Re[0][0][0]->GetNbinsX()];
+	for(int xi=1; xi<=raw1Re[0][0][0]->GetNbinsX(); xi++)
+	{
+		double enu = raw1Re[0][0][0]->GetXaxis()->GetBinCenter(xi);
+		// weightmm[xi-1] = oscProb->GetProbNuMuNuMu(enu);
+		// weightmbmb[xi-1] = oscProb->GetProbNuMuBarNuMuBar(enu);
+		// weightee[xi-1] = oscProb->GetProbNuENuE(enu);
+		// weightebeb[xi-1] = oscProb->GetProbNuEBarNuEBar(enu);
+		// weightme[xi-1] = oscProb->GetProbNuMuNuE(enu);
+		// weightmbeb[xi-1] = oscProb->GetProbNuMuBarNuEBar(enu);     
+
+		weightmm[xi-1] = 1.;
+		weightmbmb[xi-1] = 1.;
+		weightee[xi-1] = 1.;
+		weightebeb[xi-1] = 1.;
+		weightme[xi-1] = 1.;
+		weightmbeb[xi-1] = 1.;
+		//if(enu<0.7 && enu>0.5) std::cout << weightme[xi-1] << std::endl;
+	}
+    
+
+	for(int i=0; i<2; i++)
+	{
+		for(int j=0; j<6; j++)
+		{
+			double *weight1;
+			if(j==0) weight1 = weightmm;
+			else if(j==1) weight1 = weightmbmb;
+			else if(j==2) weight1 = weightee;
+			else if(j==3) weight1 = weightebeb;
+			else if(j==4) weight1 = weightme;
+			else if(j==5) weight1 = weightmbeb;
+			for(int k=0; k<3; k++)
+			{
+
+				for(int xi=1; xi<=raw1Re[i][j][k]->GetNbinsX(); xi++)
+				{
+					double w = weight1[xi-1];
+					// if(k==2) w = 1.0;
+					// if(k==2 && j>3) w = 0.0;
+					for(int yi=1; yi<=raw1Re[i][j][k]->GetNbinsY(); yi++) 
+					{
+						raw1ReOsc[i][j][k]->SetBinContent(xi,yi,w*raw1Re[i][j][k]->GetBinContent(xi,yi));
+						// raw1ReOsc[i][j][k]->SetBinContent(xi,yi,raw1Re[i][j][k]->GetBinContent(xi,yi));
+					}
+				}   
+
+				for(int xi=1; xi<=raw1Rmu[i][j][k]->GetNbinsX(); xi++)
+				{
+					double w = weight1[xi-1];
+					// if(k==2) w = 1.0;
+					// if(k==2 && j>3) w = 0.0;
+					for(int yi=1; yi<=raw1Rmu[i][j][k]->GetNbinsY(); yi++)
+					{
+						raw1RmuOsc[i][j][k]->SetBinContent(xi,yi,w*raw1Rmu[i][j][k]->GetBinContent(xi,yi));
+						// raw1RmuOsc[i][j][k]->SetBinContent(xi,yi,raw1Rmu[i][j][k]->GetBinContent(xi,yi));
+					}
+				}   
+			}
+		}  
+	}
+	delete [] weightmm;
+	delete [] weightmbmb;
+	delete [] weightee;
+	delete [] weightebeb;
+	delete [] weightme;
+	delete [] weightmbeb;
+
+}
+
 void AtmFluxFile::SaveToFile(char *filename)
 {
  
@@ -541,168 +643,207 @@ void AtmFluxFile::GetPredictions(TH1D **hists1Re, TH1D **hists1Rmu, SystParams *
   hists1Rmu[0] = (TH1D*)pred1Rmu[0][0][0]->Clone("FHC1Rmu");
   hists1Rmu[1] = (TH1D*)pred1Rmu[1][0][0]->Clone("RHC1Rmu");
 
-  //Make histograms with systematics included
-  for(int i=0; i<2; i++){
-     int pmap = pow(2,i);
-     for(int j=0; j<6; j++){
-       int fmap = pow(2,j);
-       for(int k=0; k<3; k++){
-         int xmap = pow(2,k);
-         //double sysweight = 1.0;
+	//Make histograms with systematics included
+	for(int i=0; i<2; i++)
+	{
+		int pmap = pow(2,i);
+		for(int j=0; j<6; j++)
+		{
+			int fmap = pow(2,j);
+			for(int k=0; k<3; k++)
+			{
+				int xmap = pow(2,k);
+				//double sysweight = 1.0;
 
-         /*for(int si=0; si<systParams->GetNSysts(); si++){
-           if( systParams->GetParamType(si)!=ERECNORM && systParams->GetParamType(si)!=ENUNORM ) continue;
-           if( (fmap & systParams->GetFluxMode(si))==0 ) continue;
-           if( (xmap & systParams->GetXsecMode(si))==0 ) continue;
-           if( (pmap & systParams->GetPolarityMode(si))==0 ) continue;
-           if( (detID & systParams->GetDetectorID(si))==0 ) continue;
-           sysweight *= systParams->GetParamValue(i);
-         }*/
+				/*for(int si=0; si<systParams->GetNSysts(); si++){
+				if( systParams->GetParamType(si)!=ERECNORM && systParams->GetParamType(si)!=ENUNORM ) continue;
+				if( (fmap & systParams->GetFluxMode(si))==0 ) continue;
+				if( (xmap & systParams->GetXsecMode(si))==0 ) continue;
+				if( (pmap & systParams->GetPolarityMode(si))==0 ) continue;
+				if( (detID & systParams->GetDetectorID(si))==0 ) continue;
+				sysweight *= systParams->GetParamValue(i);
+				}*/
 
-         double *weightErec = new double[raw1ReOsc[i][j][k]->GetNbinsY()];
-         double *weightEnu = new double[raw1ReOsc[i][j][k]->GetNbinsX()];
-         int pidmap = 1;
+				double *weightErec = new double[raw1ReOsc[i][j][k]->GetNbinsY()];
+				double *weightEnu = new double[raw1ReOsc[i][j][k]->GetNbinsX()];
+				int pidmap = 1;
 
-         //Save the Erec weights
-         for(int yi=1; yi<=raw1ReOsc[i][j][k]->GetNbinsY(); yi++){
-           weightErec[yi-1] = 1.0;
-           double erec = raw1ReOsc[i][j][k]->GetYaxis()->GetBinCenter(yi);
-           for(int si=0; si<systParams->GetNSysts(); si++){
-             if( systParams->GetParamType(si)!=ERECNORM) continue;
-             if( (fmap & systParams->GetFluxMode(si))==0 ) continue;
-             if( (xmap & systParams->GetXsecMode(si))==0 ) continue;
-             if( (pmap & systParams->GetPolarityMode(si))==0 ) continue;
-             if( (detID & systParams->GetDetectorID(si))==0 ) continue;
-             if( (pidmap & systParams->GetPIDType(si))==0 ) continue;
-             if( erec<systParams->GetMaxEnergy(si) && erec>systParams->GetMinEnergy(si) ) weightErec[yi-1] *= systParams->GetParamValue(si);
-           }            
-         }  
+				//Save the Erec weights
+				for(int yi=1; yi<=raw1ReOsc[i][j][k]->GetNbinsY(); yi++)
+				{
+					weightErec[yi-1] = 1.0;
+					double erec = raw1ReOsc[i][j][k]->GetYaxis()->GetBinCenter(yi);
+					for(int si=0; si<systParams->GetNSysts(); si++)
+					{
+						if( systParams->GetParamType(si)!=ERECNORM) continue;
+						if( (fmap & systParams->GetFluxMode(si))==0 ) continue;
+						if( (xmap & systParams->GetXsecMode(si))==0 ) continue;
+						if( (pmap & systParams->GetPolarityMode(si))==0 ) continue;
+						if( (detID & systParams->GetDetectorID(si))==0 ) continue;
+						if( (pidmap & systParams->GetPIDType(si))==0 ) continue;
+						if( erec<systParams->GetMaxEnergy(si) && erec>systParams->GetMinEnergy(si) ) weightErec[yi-1] *= systParams->GetParamValue(si);
+						// cout << weightErec[yi-1] << endl;
+					}            
+				}  
 
-         //Save the Enu weights
-         for(int xi=1; xi<=raw1ReOsc[i][j][k]->GetNbinsX(); xi++){
-           weightEnu[xi-1] = 1.0;
-           double enu = raw1ReOsc[i][j][k]->GetXaxis()->GetBinCenter(xi);
-           for(int si=0; si<systParams->GetNSysts(); si++){
-             if( systParams->GetParamType(si)!=ENUNORM) continue;
-             if( (fmap & systParams->GetFluxMode(si))==0 ) continue;
-             if( (xmap & systParams->GetXsecMode(si))==0 ) continue;
-             if( (pmap & systParams->GetPolarityMode(si))==0 ) continue;
-             if( (detID & systParams->GetDetectorID(si))==0 ) continue;
-             if( (pidmap & systParams->GetPIDType(si))==0 ) continue;
-             if( enu<systParams->GetMaxEnergy(si) && enu>systParams->GetMinEnergy(si) ) weightEnu[xi-1] *= systParams->GetParamValue(si);
-           }
-         }
+				//Save the Enu weights
+				for(int xi=1; xi<=raw1ReOsc[i][j][k]->GetNbinsX(); xi++)
+				{
+					weightEnu[xi-1] = 1.0;
+					double enu = raw1ReOsc[i][j][k]->GetXaxis()->GetBinCenter(xi);
+					for(int si=0; si<systParams->GetNSysts(); si++)
+					{
+						if( systParams->GetParamType(si)!=ENUNORM) continue;
+						if( (fmap & systParams->GetFluxMode(si))==0 ) continue;
+						if( (xmap & systParams->GetXsecMode(si))==0 ) continue;
+						if( (pmap & systParams->GetPolarityMode(si))==0 ) continue;
+						if( (detID & systParams->GetDetectorID(si))==0 ) continue;
+						if( (pidmap & systParams->GetPIDType(si))==0 ) continue;
+						if( enu<systParams->GetMaxEnergy(si) && enu>systParams->GetMinEnergy(si) ) weightEnu[xi-1] *= systParams->GetParamValue(si);
+						// cout << weightEnu[xi-1] << endl;
+					}
+				}
 
 
-         for(int yi=1; yi<=raw1ReOsc[i][j][k]->GetNbinsY(); yi++){
-           double count = 0.;
-           for(int xi=1; xi<=raw1ReOsc[i][j][k]->GetNbinsX(); xi++) count += raw1ReOsc[i][j][k]->GetBinContent(xi,yi)*weightErec[yi-1]*weightEnu[xi-1];
-           if(j==0 && k==0) hists1Re[i]->SetBinContent(yi,count);
-           else hists1Re[i]->SetBinContent(yi,count+hists1Re[i]->GetBinContent(yi));
-         }
+				for(int yi=1; yi<=raw1ReOsc[i][j][k]->GetNbinsY(); yi++)
+				{
+					double count = 0.;
+					for(int xi=1; xi<=raw1ReOsc[i][j][k]->GetNbinsX(); xi++) 
+					{	
+						count += raw1ReOsc[i][j][k]->GetBinContent(xi,yi)*weightErec[yi-1]*weightEnu[xi-1];
+					}
+					// cout << hists1Re[i]->GetBinContent(yi) << endl;
+					// cout << count << endl;
+					if(j==0 && k==0) hists1Re[i]->SetBinContent(yi,count);
+					else hists1Re[i]->SetBinContent(yi,count+hists1Re[i]->GetBinContent(yi));
+				}
 
-         delete [] weightErec;
-         delete [] weightEnu;
-         weightErec = new double[raw1RmuOsc[i][j][k]->GetNbinsY()];
-         weightEnu = new double[raw1RmuOsc[i][j][k]->GetNbinsX()];
-         pidmap = 2;
+				delete [] weightErec;
+				delete [] weightEnu;
+				weightErec = new double[raw1RmuOsc[i][j][k]->GetNbinsY()];
+				weightEnu = new double[raw1RmuOsc[i][j][k]->GetNbinsX()];
 
-         //Save the Erec weights
-         for(int yi=1; yi<=raw1RmuOsc[i][j][k]->GetNbinsY(); yi++){
-           weightErec[yi-1] = 1.0;
-           double erec = raw1RmuOsc[i][j][k]->GetYaxis()->GetBinCenter(yi);
-           for(int si=0; si<systParams->GetNSysts(); si++){
-             if( systParams->GetParamType(si)!=ERECNORM) continue;
-             if( (fmap & systParams->GetFluxMode(si))==0 ) continue;
-             if( (xmap & systParams->GetXsecMode(si))==0 ) continue;
-             if( (pmap & systParams->GetPolarityMode(si))==0 ) continue;
-             if( (detID & systParams->GetDetectorID(si))==0 ) continue;
-             if( (pidmap & systParams->GetPIDType(si))==0 ) continue;
-             if( erec<systParams->GetMaxEnergy(si) && erec>systParams->GetMinEnergy(si) ) weightErec[yi-1] *= systParams->GetParamValue(si);
-           }
-         }
+				pidmap = 2;
 
-         //Save the Enu weights
-         for(int xi=1; xi<=raw1RmuOsc[i][j][k]->GetNbinsX(); xi++){
-           weightEnu[xi-1] = 1.0;
-           double enu = raw1RmuOsc[i][j][k]->GetXaxis()->GetBinCenter(xi);
-           for(int si=0; si<systParams->GetNSysts(); si++){
-             if( systParams->GetParamType(si)!=ENUNORM) continue;
-             if( (fmap & systParams->GetFluxMode(si))==0 ) continue;
-             if( (xmap & systParams->GetXsecMode(si))==0 ) continue;
-             if( (pmap & systParams->GetPolarityMode(si))==0 ) continue;
-             if( (detID & systParams->GetDetectorID(si))==0 ) continue;
-             if( (pidmap & systParams->GetPIDType(si))==0 ) continue;
-             if( enu<systParams->GetMaxEnergy(si) && enu>systParams->GetMinEnergy(si) ) weightEnu[xi-1] *= systParams->GetParamValue(si);
-           }
-         }
+				//Save the Erec weights
+				for(int yi=1; yi<=raw1RmuOsc[i][j][k]->GetNbinsY(); yi++)
+				{
+					weightErec[yi-1] = 1.0;
+					double erec = raw1RmuOsc[i][j][k]->GetYaxis()->GetBinCenter(yi);
+					for(int si=0; si<systParams->GetNSysts(); si++)
+					{
+						if( systParams->GetParamType(si)!=ERECNORM) continue;
+						if( (fmap & systParams->GetFluxMode(si))==0 ) continue;
+						if( (xmap & systParams->GetXsecMode(si))==0 ) continue;
+						if( (pmap & systParams->GetPolarityMode(si))==0 ) continue;
+						if( (detID & systParams->GetDetectorID(si))==0 ) continue;
+						if( (pidmap & systParams->GetPIDType(si))==0 ) continue;
+						if( erec<systParams->GetMaxEnergy(si) && erec>systParams->GetMinEnergy(si) ) weightErec[yi-1] *= systParams->GetParamValue(si);
+						if(yi == 1)
+						{
+							// cout << "rec Weight : " << weightErec[yi-1] << endl;
+						}
+					}
+				}
+
+				//Save the Enu weights
+				for(int xi=1; xi<=raw1RmuOsc[i][j][k]->GetNbinsX(); xi++)
+				{
+					weightEnu[xi-1] = 1.0;
+					double enu = raw1RmuOsc[i][j][k]->GetXaxis()->GetBinCenter(xi);
+					for(int si=0; si<systParams->GetNSysts(); si++)
+					{
+						if( systParams->GetParamType(si)!=ENUNORM) continue;
+						if( (fmap & systParams->GetFluxMode(si))==0 ) continue;
+						if( (xmap & systParams->GetXsecMode(si))==0 ) continue;
+						if( (pmap & systParams->GetPolarityMode(si))==0 ) continue;
+						if( (detID & systParams->GetDetectorID(si))==0 ) continue;
+						if( (pidmap & systParams->GetPIDType(si))==0 ) continue;
+						if( enu<systParams->GetMaxEnergy(si) && enu>systParams->GetMinEnergy(si) ) weightEnu[xi-1] *= systParams->GetParamValue(si);
+					}
+				}
  
           
-         for(int yi=1; yi<=raw1RmuOsc[i][j][k]->GetNbinsY(); yi++){
-           double count = 0.;
-           for(int xi=1; xi<=raw1RmuOsc[i][j][k]->GetNbinsX(); xi++) count += raw1RmuOsc[i][j][k]->GetBinContent(xi,yi)*weightErec[yi-1]*weightEnu[xi-1];
-           if(j==0 && k==0) hists1Rmu[i]->SetBinContent(yi,count);
-           else hists1Rmu[i]->SetBinContent(yi,count+hists1Rmu[i]->GetBinContent(yi));
-         }
+				for(int yi=1; yi<=raw1RmuOsc[i][j][k]->GetNbinsY(); yi++)
+				{
+					double count = 0.;
+					
+					for(int xi=1; xi<=raw1RmuOsc[i][j][k]->GetNbinsX(); xi++) 
+					{
+						count += raw1RmuOsc[i][j][k]->GetBinContent(xi,yi)*weightErec[yi-1]*weightEnu[xi-1];
+						if(yi == 1)
+						{
+							// cout << raw1RmuOsc[i][j][k]->GetBinContent(xi, yi) << endl;
+						}
+					}
+					if(j==0 && k==0) hists1Rmu[i]->SetBinContent(yi,count);
+					else hists1Rmu[i]->SetBinContent(yi,count+hists1Rmu[i]->GetBinContent(yi));
+					// cout << hists1Rmu[i]->SetBinContent(1, count + hists1Rmu[1]->GetBinContent(yi)) << endl;
+					// if(yi == 1)cout << "count : " << count << endl;
+				}
 
-         delete [] weightErec;
-         delete [] weightEnu;
-       }
-     }
-   }         
+				delete [] weightErec;
+				delete [] weightEnu;
+			}
+		}
+	}         
 
- //Do the energy scale systematics
-  for(int i=0; i<2; i++){
-   int pmap = pow(2,i);
-   for(int si=0; si<systParams->GetNSysts(); si++){
-     if( systParams->GetParamType(si)!=ESCALE ) continue;
-     if( (detID & systParams->GetDetectorID(si))==0 ) continue;
-     if( (pmap & systParams->GetPolarityMode(si))==0 ) continue;
-     double escale = systParams->GetParamValue(si);
-     escale = energyScale;
-     //Make a temporary Graph()
-     double tmp = 0.;
+	//Do the energy scale systematics
+	for(int i=0; i<2; i++)
+	{
+		int pmap = pow(2,i);
+		for(int si=0; si<systParams->GetNSysts(); si++)
+		{
+			if( systParams->GetParamType(si)!=ESCALE ) continue;
+			if( (detID & systParams->GetDetectorID(si))==0 ) continue;
+			if( (pmap & systParams->GetPolarityMode(si))==0 ) continue;
+			double escale = systParams->GetParamValue(si);
+			escale = energyScale;
+			//Make a temporary Graph()
+			double tmp = 0.;
 
-     int pidmap = 1;
-     double gre_xvalue;
-     double gre_yvalue;
-     if( (pidmap & systParams->GetPIDType(si))!=0 ){
-       TGraph *gre = new TGraph();
-       for(int l=1; l<=hists1Re[i]->GetNbinsX(); l++)
-       {
-         gre->SetPoint(l-1,hists1Re[i]->GetXaxis()->GetBinCenter(l)*escale,hists1Re[i]->GetBinContent(l)/(hists1Re[i]->GetXaxis()->GetBinWidth(l)*escale));
-         // escale_nue->SetPoint(l-1,hists1Re[i]->GetXaxis()->GetBinCenter(l)*escale,hists1Re[i]->GetBinContent(l)/(hists1Re[i]->GetXaxis()->GetBinWidth(l)*escale));
-       }
+			int pidmap = 1;
+			double gre_xvalue;
+			double gre_yvalue;
+			if( (pidmap & systParams->GetPIDType(si))!=0 )
+			{
+				TGraph *gre = new TGraph();
+				for(int l=1; l<=hists1Re[i]->GetNbinsX(); l++)
+				{
+				gre->SetPoint(l-1,hists1Re[i]->GetXaxis()->GetBinCenter(l)*escale,hists1Re[i]->GetBinContent(l)/(hists1Re[i]->GetXaxis()->GetBinWidth(l)*escale));
+				// escale_nue->SetPoint(l-1,hists1Re[i]->GetXaxis()->GetBinCenter(l)*escale,hists1Re[i]->GetBinContent(l)/(hists1Re[i]->GetXaxis()->GetBinWidth(l)*escale));
+				}
 
-       for(int l=1; l<=hists1Re[i]->GetNbinsX(); l++){
-         tmp = gre->Eval(hists1Re[i]->GetXaxis()->GetBinCenter(l),0,"S");
-         // std::cout << "tmp value" << tmp << std::endl;
-         if(tmp<0.) tmp = 0.;
-         hists1Re[i]->SetBinContent(l,tmp*hists1Re[i]->GetXaxis()->GetBinWidth(l));
-       } 
-       gre->Delete();
-     }
+				for(int l=1; l<=hists1Re[i]->GetNbinsX(); l++)
+				{
+					tmp = gre->Eval(hists1Re[i]->GetXaxis()->GetBinCenter(l),0,"S");
+					// std::cout << "tmp value" << tmp << std::endl;
+					if(tmp<0.) tmp = 0.;
+					hists1Re[i]->SetBinContent(l,tmp*hists1Re[i]->GetXaxis()->GetBinWidth(l));
+				} 
+			gre->Delete();
+			}
 
-     pidmap = 2;
-     if( (pidmap & systParams->GetPIDType(si))!=0 ){
-       TGraph *grmu = new TGraph();
-       for(int l=1; l<=hists1Rmu[i]->GetNbinsX(); l++)
-       {
-         grmu->SetPoint(l-1,hists1Rmu[i]->GetXaxis()->GetBinCenter(l)*escale,hists1Rmu[i]->GetBinContent(l)/(hists1Rmu[i]->GetXaxis()->GetBinWidth(l)*escale));
-         // escale_numu->SetPoint(l-1,hists1Rmu[i]->GetXaxis()->GetBinCenter(l)*escale,hists1Rmu[i]->GetBinContent(l)/(hists1Rmu[i]->GetXaxis()->GetBinWidth(l)*escale));
+			pidmap = 2;
+			if( (pidmap & systParams->GetPIDType(si))!=0 )
+			{
+				TGraph *grmu = new TGraph();
+				for(int l=1; l<=hists1Rmu[i]->GetNbinsX(); l++)
+				{
+					grmu->SetPoint(l-1,hists1Rmu[i]->GetXaxis()->GetBinCenter(l)*escale,hists1Rmu[i]->GetBinContent(l)/(hists1Rmu[i]->GetXaxis()->GetBinWidth(l)*escale));
+					// escale_numu->SetPoint(l-1,hists1Rmu[i]->GetXaxis()->GetBinCenter(l)*escale,hists1Rmu[i]->GetBinContent(l)/(hists1Rmu[i]->GetXaxis()->GetBinWidth(l)*escale));
 
-       }
-       for(int l=1; l<=hists1Rmu[i]->GetNbinsX(); l++){
-         tmp = grmu->Eval(hists1Rmu[i]->GetXaxis()->GetBinCenter(l),0,"S");
-         if(tmp<0.) tmp = 0.;
-         hists1Rmu[i]->SetBinContent(l,tmp*hists1Rmu[i]->GetXaxis()->GetBinWidth(l));
-       } 
-       grmu->Delete();
-     }  
-   }
- }  
- 
-
+				}
+				for(int l=1; l<=hists1Rmu[i]->GetNbinsX(); l++)
+				{
+					tmp = grmu->Eval(hists1Rmu[i]->GetXaxis()->GetBinCenter(l),0,"S");
+					if(tmp<0.) tmp = 0.;
+					hists1Rmu[i]->SetBinContent(l,tmp*hists1Rmu[i]->GetXaxis()->GetBinWidth(l));
+				} 
+				grmu->Delete();
+			}  
+		}
+	}  
 }
 
 void AtmFluxFile::BuildHistogramsSystOnly(SystParams *systParams )
@@ -875,91 +1016,169 @@ int main(void)
 	// Treating data
 	char cardFile[] = "../../input_kd_1p5_test.card";
 	// prob->SetOscillationParameters((ithier==0 ? 1.0 : -1.0)*oscParams->GetParamValue(0),oscParams->GetParamValue(1),oscParams->GetParamValue(2),oscParams->GetParamValue(3),oscParams->GetParamValue(4),oscParams->GetParamValue(5));
-	AtmFluxFile * ffile = new AtmFluxFile(cardFile, prob, 0);
 
 
-	int czNbin = 20;
+	int czNbin = 40;
 	double czStart 	= 1.0;
 	double czEnd 	= 0.0;
 	double czStep 	= (czStart - czEnd) / (double)czNbin;
-	double czBin[czNbin];
+	double czBin[czNbin + 1];
 
-	for(int i = 0; i < czNbin; i++)
+	for(int i = 0; i <= czNbin; i++)
 	{
-		czBin[i] = czStart - czStep * (double)i;
-		// cout << czBin[i] << endl;
+		// czBin[i] = czEnd + (czStep * 0.5) + czStep * (double)i;
+		czBin[i] = czEnd + czStep * (double)i;
+		// czBin[i] = czStart - (czStep * 0.5) - czStep * (double)i; // Just for same order in both direction
 	}
+	// czBin[czNbin] = czStart;
 	int azNbin = 12;
-	
+	double azStep = (2.0 * M_PI)/(double)azNbin;
+
 	TH2D *raw1ReEvent[2][6][3];
 	TH2D *raw1RmuEvent[2][6][3];
+	TH2D *raw1ReOscEvent[2][6][3];
+	TH2D *raw1RmuOscEvent[2][6][3];
+
 	TH2D *raw1ReTotal = NULL;
 	TH2D *raw1RmuTotal = NULL;
-	double nueEvent, nueEventTotal = 0;
-	double numuEvent, numuEventTotal = 0;
-	for(int az = 0; az < azNbin; az++)
+	double nueEvent = 0, nueEventTotal = 0;
+	double numuEvent = 0, numuEventTotal = 0;
+	double nueOscEvent = 0, nueOscEventTotal = 0;
+	double numuOscEvent = 0, numuOscEventTotal = 0;
+	// int 
+	// AtmFluxFile * ffile = new AtmFluxFile(cardFile, prob, 0);
+	// ffile->ApplyFluxWeights();
+	// ffile -> ApplyFluxWeights(czBin[0], az);
+
+	AtmFluxFile * ffile = new AtmFluxFile(cardFile, prob, 0);
+	raw1ReEvent[0][0][0] = ffile -> Getraw1Re(0, 0, 0);
+	raw1RmuEvent[0][0][0] = ffile -> Getraw1Rmu(0, 0, 0);
+	TH2D * Event2D1Re = new TH2D("Event2D1Re", "", czNbin - 1, czBin, raw1ReEvent[0][0][0]->GetYaxis()->GetNbins() - 1, raw1ReEvent[0][0][0]->GetYaxis()->GetXbins()->GetArray());
+	// TH2D * Event2D1Re = new TH2D("Event2D1Re", "Event2D1Re", czNbin, czBinEnd, czStart, raw1ReEvent[0][0][0]->GetYaxis()->GetNbins(), raw1ReEvent[0][0][0]->GetYaxis()->GetXbins()->GetArray());
+	TH2D * Event2D1Rmu = new TH2D("Event2D1Rmu", "", czNbin - 1, czBin, raw1RmuEvent[0][0][0]->GetYaxis()->GetNbins() - 1, raw1RmuEvent[0][0][0]->GetYaxis()->GetXbins()->GetArray());
+	ffile -> SetAngularBin(czStep, azStep);
+
+	TH1D * data1Re[2];
+	TH1D * data1Rmu[2];
+	TH1D * data1ReTotal[2];
+	TH1D * data1RmuTotal[2];
+
+	for (int i = 0; i < 2; i++)
 	{
-		ffile -> ApplyFluxWeights(czBin[0], az);
-		for(int i = 0; i < 2; i++)
+		data1Re[i] = NULL;
+		data1Rmu[i] = NULL;
+		data1ReTotal[i] = NULL;
+		data1RmuTotal[i] = NULL;
+	}
+
+	for(int cz = 0; cz <= czNbin; cz++)
+	{
+		for(int az = 0; az < azNbin; az++)
 		{
-			for(int j = 0; j < 6; j++)
+			ffile->ApplyFluxWeights(czBin[cz], az);
+			ffile->ApplyOscillations(czBin[cz]);
+			nueEventTotal = 0;
+			numuEventTotal = 0;
+			nueOscEventTotal = 0;
+			numuOscEventTotal = 0;
+			if(cz == 13)
 			{
-				for(int k = 0; k < 3; k++)
+				for(int i = 0; i < 1; i++)
 				{
-					raw1ReEvent[i][j][k] = ffile -> Getraw1Re(i, j, k);
-					raw1RmuEvent[i][j][k] = ffile -> Getraw1Rmu(i, j, k);
-					for(int xi=1; xi<=raw1ReEvent[i][j][k]->GetNbinsX()+1; xi++){
-						for(int yi=1; yi<=raw1ReEvent[i][j][k]->GetNbinsY()+1; yi++) 
+					for(int j = 0; j < 6; j++)
+					{
+						for(int k = 0; k < 3; k++)
 						{
-							nueEvent = raw1ReEvent[i][j][k]->GetBinContent(xi,yi);
-							nueEventTotal += nueEvent;
+							raw1ReEvent[i][j][k]  = ffile -> Getraw1Re(i, j, k);
+							raw1RmuEvent[i][j][k] = ffile -> Getraw1Rmu(i, j, k);
+							raw1ReOscEvent[i][j][k]  = ffile -> Getraw1ReOsc(i, j, k);
+							raw1RmuOscEvent[i][j][k] = ffile -> Getraw1RmuOsc(i, j, k);
+							for(int xi = 1; xi <= raw1ReEvent[i][j][k]->GetNbinsX(); xi++)
+							{
+								for(int yi=1; yi <= raw1ReEvent[i][j][k]->GetNbinsY(); yi++) 
+								{
+									nueEvent = raw1ReEvent[i][j][k]->GetBinContent(xi,yi);
+									numuEvent = raw1RmuEvent[i][j][k]->GetBinContent(xi,yi);
+									nueEventTotal += nueEvent;
+									numuEventTotal += numuEvent;
+
+									nueOscEvent = raw1ReOscEvent[i][j][k]->GetBinContent(xi,yi);
+									numuOscEvent = raw1RmuOscEvent[i][j][k]->GetBinContent(xi,yi);
+									nueOscEventTotal += nueOscEvent;
+									numuOscEventTotal += numuOscEvent;
+								}
+							}
 						}
-						
 					}
-				}
+				}				
 			}
+			
+
+			systParams->ResetParams();
+			ffile->GetPredictions(data1Re, data1Rmu, systParams, 1.0);
+			if(az == 0)
+			{
+				if(data1ReTotal[0]!=NULL) data1ReTotal[0]->Delete();
+				if(data1ReTotal[1]!=NULL) data1ReTotal[1]->Delete();
+				if(data1RmuTotal[0]!=NULL) data1RmuTotal[0]->Delete();
+				if(data1RmuTotal[1]!=NULL) data1RmuTotal[1]->Delete();
+				data1ReTotal[0] = (TH1D *)data1Re[0]->Clone();
+				data1ReTotal[1] = (TH1D *)data1Re[1]->Clone();
+				data1RmuTotal[0] = (TH1D *)data1Rmu[0]->Clone();
+				data1RmuTotal[1] = (TH1D *)data1Rmu[1]->Clone();
+			}
+			else
+			{
+				data1ReTotal[0]->Add(data1Re[0], 1.0);
+				data1ReTotal[1]->Add(data1Re[1], 1.0);
+				data1RmuTotal[0]->Add(data1Rmu[0], 1.0);
+				data1RmuTotal[1]->Add(data1Rmu[1], 1.0);
+			}
+
+		}
+		for (int i = 1; i <= data1ReTotal[0]->GetXaxis()->GetNbins(); i++)
+		{
+			Event2D1Re 	->Fill(czBin[cz], data1ReTotal[0]->GetXaxis()->GetBinCenter(i), data1ReTotal[0]->GetBinContent(i));
+			Event2D1Rmu 	->Fill(czBin[cz], data1RmuTotal[0]->GetXaxis()->GetBinCenter(i), data1RmuTotal[0]->GetBinContent(i));
+			// Event2D1Re 	->SetBinContent(cz, i, data1ReTotal[0]->GetBinContent(i));
+			// Event2D1Rmu 	->SetBinContent(cz, i, data1RmuTotal[0]->GetBinContent(i));
 		}
 	}
-	cout << nueEventTotal << endl;
-	cout << "hello" << endl;
+	// int count = 2;
+	// cout << data1ReTotal[0]->GetXaxis()->GetBinCenter(count) << "\t" << data1ReTotal[0]->GetBinContent(count) << endl;
+	// cout << data1RmuTotal[0]->GetXaxis()->GetBinCenter(count) << "\t" << data1RmuTotal[0]->GetBinContent(count) <<endl;
 
-	// ffile -> ApplyOscillations();
+	cout << "nueEvent : " << nueEventTotal << endl;
+	cout << "numuEvent : " << numuEventTotal << endl;
+	double datavalue1 = 0;
+	for (int i = 1; i <= data1ReTotal[0]->GetXaxis()->GetNbins(); i++)
+	{
+		datavalue1 += data1ReTotal[0]->GetBinContent(i);
+	}
+	double datavalue2 = 0;
+	for (int i = 1; i <= data1ReTotal[1]->GetXaxis()->GetNbins(); i++)
+	{
+		datavalue2 += data1ReTotal[1]->GetBinContent(i);
+	}
+	double datavalue3 = 0;
+	for (int i = 1; i <= data1RmuTotal[0]->GetXaxis()->GetNbins(); i++)
+	{
+		datavalue3 += data1RmuTotal[0]->GetBinContent(i);
+	}
+	double datavalue4 = 0;
+	cout << endl;
+	for (int i = 1; i <= data1RmuTotal[1]->GetXaxis()->GetNbins(); i++)
+	{
+		datavalue4 += data1RmuTotal[1]->GetBinContent(i);
+	}
+	cout << datavalue1 << "\t" << datavalue2 << "\t" << datavalue3 << "\t" << datavalue4 << endl;
 
-	// TH1D * Atmfluxfile = NULL;
-	// TH2D * rawFile = NULL;
-
-	// rawFile = ffile -> Getraw1Re(0, 0, 0);
-	// Atmfluxfile = ffile -> GetfluxRatios(0, 0);
-
-	// for(int xi=1; xi<=rawFile->GetNbinsX()+1;xi++)
-	// {
-	// 	double enu = rawFile->GetXaxis()->GetBinCenter(xi);
-	// 	int fbin = Atmfluxfile->FindBin(enu);
-	// 	double fweight = Atmfluxfile->GetBinContent(fbin);
-	// 	// cout << enu << "\t" << log(enu) << "\t" << fbin << "\t" << fweight << endl;
-	// 	cout << rawFile->GetXaxis()->GetBinWidth(xi) << endl;
-	// }
-
-	// systParams->ResetParams();
-	// ffile->GetPredictions(data1ReKD, data1RmuKD, systParams, 0.8);
-
-
-
-	// /*===========================================================================================================================================
-	 
-	// 	Deal with data before and after applying energy scale parameter
-	
-	//  ===========================================================================================================================================*/
-	// char fOutFile[] = "output0.8.root";
-	// TFile *fout = new TFile(fOutFile,"RECREATE");
-	// for(int i = 0; i < 2; i++)
-	// {
-	// 	data1ReKD[i]->Write();
-	// 	data1RmuKD[i]->Write();
-	// }
-	// fout->Close();
-
-
+	char fOutFile[] = "output2DAtm.root";
+	TFile *fout = new TFile(fOutFile,"RECREATE");
+	fout->cd();
+	Event2D1Re->Write();
+	Event2D1Rmu->Write();
+	fout->Close();
 	return 0;
 
 }

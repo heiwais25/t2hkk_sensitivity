@@ -45,7 +45,8 @@ void BargerPropagator::init()
 
 
 
-void BargerPropagator::propagate( int NuFlavor ){
+void BargerPropagator::propagate( int NuFlavor )
+{
 
    int    i,j;
    int    Layers;
@@ -72,15 +73,15 @@ void BargerPropagator::propagate( int NuFlavor ){
       exit(-1);
    }  
 
-   clear_complex_matrix( TransitionMatrix );
-   clear_complex_matrix( TransitionProduct );
-   clear_complex_matrix( TransitionTemp );
-	
-   ClearProbabilities();
+    clear_complex_matrix( TransitionMatrix );
+    clear_complex_matrix( TransitionProduct );
+    clear_complex_matrix( TransitionTemp );
+
+    ClearProbabilities();
 
 	
-   Earth->SetDensityProfile( CosineZenith, PathLength, ProductionHeight );
-   Layers = Earth->get_LayersTraversed( );
+    Earth->SetDensityProfile( CosineZenith, PathLength, ProductionHeight );
+    Layers = Earth->get_LayersTraversed( );
 
 	
    for ( i = 0; i < Layers ; i++ )
@@ -203,15 +204,23 @@ void BargerPropagator::SetMNS( double x12, double x13, double x23,
 
 }
 
+/**
+ * DefinePath
+ * @param cz             cosine zenith angle in neutrino incident angle
+ * @param ProdHeight   production height which neutrino created
+ * @param kSetProfile  whether we will use this value in the Earth density profile(default = True)
+ */
 void BargerPropagator::DefinePath(double cz, double ProdHeight, bool kSetProfile )
 {
 
-   ProductionHeight = ProdHeight*1e5;
-   PathLength = sqrt( (REarth + ProductionHeight )*(REarth + ProductionHeight) 
-                     - (REarth*REarth)*( 1 - cz*cz)) - REarth*cz;
-   CosineZenith = cz;
-   if( kSetProfile )
-      Earth->SetDensityProfile( CosineZenith, PathLength, ProductionHeight );
+    ProductionHeight = ProdHeight * 1e5;
+    PathLength = sqrt( (REarth + ProductionHeight )*(REarth + ProductionHeight) 
+                 - (REarth*REarth)*( 1 - cz*cz)) - REarth*cz;
+    CosineZenith = cz;
+    if( kSetProfile )
+    {
+        Earth->SetDensityProfile( CosineZenith, PathLength, ProductionHeight );
+    }
 	
 }
 

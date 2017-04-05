@@ -31,11 +31,19 @@ class AtmFluxFile
 		void BuildHistograms(SystParams *systParams);
 		void BuildHistograms();
 		void BuildHistogramsSystOnly(SystParams *systParams );
+
+
 		void ApplyOscillations();
+		void ApplyOscillations(double cz);
+
+
 		void SaveToFile(char *filename);
 		void GetPredictions(TH1D **hists1Re, TH1D **hists1Rmu);
 		void GetPredictions(TH1D **hists1Re, TH1D **hists1Rmu, SystParams *systParams, double energyScale);
 		TH2D* GetWeightedTemplate(FLAVOR nuflavor, RCODE reactcode, POLARITY hornpolarity, SELECTION sample);
+
+		void SetAngularBin(double czBin, double azBin){cosineZenithBin = czBin; AzimuthBin = azBin;};
+
 
 		double GetBaseline(){return baseline;};
 		double GetDensity(){return density;};
@@ -44,20 +52,31 @@ class AtmFluxFile
 		// TH2D ** Getraw1Rmu(){return raw1Rmu;};
 		TH2D * Getraw1Re(int polarity, int flavor, int interaction){return raw1Re[polarity][flavor][interaction];};
 		TH2D * Getraw1Rmu(int polarity, int flavor, int interaction){return raw1Rmu[polarity][flavor][interaction];};
-		TH1D * Getpred1Re(int polarity, int flavor, int interaction){return pred1Re[polarity][flavor][interaction];};
-		TH1D * Getpred1Rmu(int polarity, int flavor, int interaction){return pred1Rmu[polarity][flavor][interaction];};
+
 		TH2D * Getraw1ReOsc(int polarity, int flavor, int interaction){return raw1ReOsc[polarity][flavor][interaction];};
 		TH2D * Getraw1RmuOsc(int polarity, int flavor, int interaction){return raw1RmuOsc[polarity][flavor][interaction];};
+		
+		TH2D * Getraw1ReSave(int polarity, int flavor, int interaction){return raw1ReSave[polarity][flavor][interaction];};
+		TH2D * Getraw1RmuSave(int polarity, int flavor, int interaction){return raw1RmuSave[polarity][flavor][interaction];};
+
+		TH1D * Getpred1Re(int polarity, int flavor, int interaction){return pred1Re[polarity][flavor][interaction];};
+		TH1D * Getpred1Rmu(int polarity, int flavor, int interaction){return pred1Rmu[polarity][flavor][interaction];};
 		TH1D * GetfluxRatios(int polarity, int flavor){return fluxRatios[polarity][flavor];};
+		TH1D * GetfluxSK(int polarity, int flavor){return fluxSK[polarity][flavor];};
 		TGraph * GetEscaleNue(){return escale_nue;};
 		TGraph * GetEscaleNumu(){return escale_numu;};
 
+
+
 	private:
 		TH1D *fluxRatios[2][4];
+		TH1D *fluxSK[2][4];
 		TH1D *pred1Re[2][6][3];
 		TH1D *pred1Rmu[2][6][3];
 		TH2D *raw1Re[2][6][3];
 		TH2D *raw1Rmu[2][6][3];
+		TH2D *raw1ReSave[2][6][3];
+		TH2D *raw1RmuSave[2][6][3];
 		TH2D *raw1ReOsc[2][6][3];
 		TH2D *raw1RmuOsc[2][6][3];
 		TH2D *pred1Re2D[2][6][3];
@@ -76,6 +95,9 @@ class AtmFluxFile
 		TGraph * escale_numu;
 		int detID;
 		int interpolateMode;
+
+		double cosineZenithBin;
+		double AzimuthBin;
 
 		double avogadroN;
 };

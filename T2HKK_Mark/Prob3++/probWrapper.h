@@ -16,6 +16,13 @@ class ProbWrapper {
         double GetProbNuEBarNuEBar(float energy);
         double GetProbNuMuBarNuEBar(float energy);
 
+        double GetProbNuMuNuMu(float energy, float cosineZ);
+        double GetProbNuMuNuE(float energy, float cosineZ);
+        double GetProbNuMuBarNuMuBar(float energy, float cosineZ);
+        double GetProbNuENuE(float energy, float cosineZ);
+        double GetProbNuEBarNuEBar(float energy, float cosineZ);
+        double GetProbNuMuBarNuEBar(float energy, float cosineZ);
+
         double GetProb(int initialSpecies, int finalSpecies);
 
         // Methods to change the oscillation parameters

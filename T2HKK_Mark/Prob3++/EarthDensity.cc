@@ -69,54 +69,63 @@ void EarthDensity::init()
 ///// Really need to clean this bit up, slow and bulky!
 void EarthDensity::SetDensityProfile( double CosineZ, double PathLength , double ProductionHeight)
 {
-   int i;
-   int MaxLayer;
-   double km2cm = 1.0e5;
-   double TotalEarthLength =  -2.0*CosineZ*REarth*km2cm; // in [cm]
-   double CrossThis, CrossNext;
+    int i;
+    int MaxLayer;
+    double km2cm = 1.0e5;
+    double TotalEarthLength =  -2.0*CosineZ*REarth*km2cm; // in [cm]
+    double CrossThis, CrossNext;
 
-   map<double, double>::iterator _i;
+    map<double, double>::iterator _i;
 
 
-   // path through air
-   _TraverseRhos[0] = 0.0;
-   _TraverseDistance[0] =  PathLength - TotalEarthLength ;
+    // path through air
+    _TraverseRhos[0] = 0.0;
+    _TraverseDistance[0] =  PathLength - TotalEarthLength ;
 
-   if( CosineZ >= 0 )
-   {  
-       _TraverseDistance[0] =  PathLength;
-       Layers = 1; 
-       return; 
-   }
+    // In the case of neutrino doesn't pass through the Earth
+    if( CosineZ >= 0 )
+    {  
+        _TraverseDistance[0] =  PathLength;
+        Layers = 1; 
+        return; 
+    }
 
    	
-   Layers = 0;
-   for ( _i = _CosLimit.begin(); _i != _CosLimit.end() ; _i++ )
-      if( CosineZ < _i->second )
-          Layers++;	
+    Layers = 0;
+    for ( _i = _CosLimit.begin(); _i != _CosLimit.end() ; _i++ )
+    {
+        if( CosineZ < _i->second )
+        {
+            Layers++;	
+        }
+    }
 
 
    MaxLayer = Layers;
 
-   // the zeroth layer is the air!
-   for ( i = 0 ; i< MaxLayer ; i++ ) 
-   {
- 
-      _TraverseRhos[i+1]      = _Rhos[i];
-      CrossThis = 2.0*sqrt( _Radii[i]*_Radii[i]  - REarth*REarth*( 1 -CosineZ*CosineZ ) );
-      CrossNext = 2.0*sqrt( _Radii[i+1]*_Radii[i+1]      - REarth*REarth*( 1 -CosineZ*CosineZ ) );
+    // the zeroth layer is the air!
+    for ( i = 0 ; i< MaxLayer ; i++ ) 
+    {
+        _TraverseRhos[i+1]      = _Rhos[i];
+        CrossThis = 2.0*sqrt( _Radii[i]*_Radii[i]  - REarth*REarth*( 1 -CosineZ*CosineZ ) );
+        CrossNext = 2.0*sqrt( _Radii[i+1]*_Radii[i+1]      - REarth*REarth*( 1 -CosineZ*CosineZ ) );
 
-     if( i < MaxLayer-1 )
-      _TraverseDistance[i+1]  =  0.5*( CrossThis-CrossNext )*km2cm;
-     else
-      _TraverseDistance[i+1]  =  CrossThis*km2cm;
-    
-     // assumes azimuthal symmetry    
-     if( i < MaxLayer ){
-        _TraverseRhos    [ 2*MaxLayer - i ] = _TraverseRhos[i];
-        _TraverseDistance[ 2*MaxLayer - i ] = _TraverseDistance[i];
-     }
-   }
+        if( i < MaxLayer-1 )
+        {
+            _TraverseDistance[i+1]  =  0.5*( CrossThis-CrossNext )*km2cm;
+        }
+        else
+        {
+            _TraverseDistance[i+1]  =  CrossThis*km2cm;
+        }
+
+        // assumes azimuthal symmetry    
+        if( i < MaxLayer )
+        {
+            _TraverseRhos    [ 2*MaxLayer - i ] = _TraverseRhos[i];
+            _TraverseDistance[ 2*MaxLayer - i ] = _TraverseDistance[i];
+        }
+    }
 
    Layers = 2*MaxLayer; 
 

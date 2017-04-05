@@ -2,5 +2,9 @@
 *.sublime-workspace
 *.o
 *.a
+*.png
+log*
 html/
 latex/
+T2HKK_Mark/Fitter/.vscode/
+
