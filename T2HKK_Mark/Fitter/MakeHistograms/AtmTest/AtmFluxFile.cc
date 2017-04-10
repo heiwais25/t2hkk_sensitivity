@@ -28,7 +28,7 @@ AtmFluxFile::AtmFluxFile(char * cardFile, ProbWrapper *prob, int detid)
 {
 	interpolateMode = 0;
 
-	atmFlux = new MakeAtmFlux("/home/jh/Exercise/T2HKK_Mark/T2HKK_Mark/Fitter/Flux/resources/honda-2015-spl-solmin.d");
+	atmFlux = new MakeAtmFlux("/home/jh/Exercise/T2HKK_Mark/T2HKK_Mark/Fitter/Flux/resources/kam-nu-20-12-solmax-with-mt.d");
 	oscProb = prob;
 	cout << cardFile << endl;
 	detID = (int)(pow(2,detid)+0.00001);
@@ -515,20 +515,19 @@ void AtmFluxFile::ApplyOscillations(double cz)
 	for(int xi=1; xi<=raw1Re[0][0][0]->GetNbinsX(); xi++)
 	{
 		double enu = raw1Re[0][0][0]->GetXaxis()->GetBinCenter(xi);
-		// weightmm[xi-1] = oscProb->GetProbNuMuNuMu(enu);
-		// weightmbmb[xi-1] = oscProb->GetProbNuMuBarNuMuBar(enu);
-		// weightee[xi-1] = oscProb->GetProbNuENuE(enu);
-		// weightebeb[xi-1] = oscProb->GetProbNuEBarNuEBar(enu);
-		// weightme[xi-1] = oscProb->GetProbNuMuNuE(enu);
-		// weightmbeb[xi-1] = oscProb->GetProbNuMuBarNuEBar(enu);     
+		weightmm[xi-1] = oscProb->GetProbNuMuNuMu(enu, cz);
+		weightmbmb[xi-1] = oscProb->GetProbNuMuBarNuMuBar(enu, cz);
+		weightee[xi-1] = oscProb->GetProbNuENuE(enu, cz);
+		weightebeb[xi-1] = oscProb->GetProbNuEBarNuEBar(enu, cz);
+		weightme[xi-1] = oscProb->GetProbNuMuNuE(enu, cz);
+		weightmbeb[xi-1] = oscProb->GetProbNuMuBarNuEBar(enu, cz);   
+		// weightmm[xi-1] = 1.0;
+		// weightmbmb[xi-1] = 1.0;
+		// weightee[xi-1] = 1.0;
+		// weightebeb[xi-1] = 1.0;
+		// weightme[xi-1] = 1.0;
+		// weightmbeb[xi-1] = 1.0;
 
-		weightmm[xi-1] = 1.;
-		weightmbmb[xi-1] = 1.;
-		weightee[xi-1] = 1.;
-		weightebeb[xi-1] = 1.;
-		weightme[xi-1] = 1.;
-		weightmbeb[xi-1] = 1.;
-		//if(enu<0.7 && enu>0.5) std::cout << weightme[xi-1] << std::endl;
 	}
     
 
@@ -549,8 +548,8 @@ void AtmFluxFile::ApplyOscillations(double cz)
 				for(int xi=1; xi<=raw1Re[i][j][k]->GetNbinsX(); xi++)
 				{
 					double w = weight1[xi-1];
-					// if(k==2) w = 1.0;
-					// if(k==2 && j>3) w = 0.0;
+					if(k==2) w = 1.0;
+					if(k==2 && j>3) w = 0.0;
 					for(int yi=1; yi<=raw1Re[i][j][k]->GetNbinsY(); yi++) 
 					{
 						raw1ReOsc[i][j][k]->SetBinContent(xi,yi,w*raw1Re[i][j][k]->GetBinContent(xi,yi));
@@ -561,8 +560,8 @@ void AtmFluxFile::ApplyOscillations(double cz)
 				for(int xi=1; xi<=raw1Rmu[i][j][k]->GetNbinsX(); xi++)
 				{
 					double w = weight1[xi-1];
-					// if(k==2) w = 1.0;
-					// if(k==2 && j>3) w = 0.0;
+					if(k==2) w = 1.0;
+					if(k==2 && j>3) w = 0.0;
 					for(int yi=1; yi<=raw1Rmu[i][j][k]->GetNbinsY(); yi++)
 					{
 						raw1RmuOsc[i][j][k]->SetBinContent(xi,yi,w*raw1Rmu[i][j][k]->GetBinContent(xi,yi));
@@ -1018,20 +1017,21 @@ int main(void)
 	// prob->SetOscillationParameters((ithier==0 ? 1.0 : -1.0)*oscParams->GetParamValue(0),oscParams->GetParamValue(1),oscParams->GetParamValue(2),oscParams->GetParamValue(3),oscParams->GetParamValue(4),oscParams->GetParamValue(5));
 
 
-	int czNbin = 40;
+	int czNbin = 100;
+	int azNbin = 12;
 	double czStart 	= 1.0;
-	double czEnd 	= 0.0;
+	double czEnd 	= -1.0;
 	double czStep 	= (czStart - czEnd) / (double)czNbin;
 	double czBin[czNbin + 1];
 
 	for(int i = 0; i <= czNbin; i++)
 	{
 		// czBin[i] = czEnd + (czStep * 0.5) + czStep * (double)i;
-		czBin[i] = czEnd + czStep * (double)i;
+		// czBin[i] = czEnd + czStep * (double)i;
+		czBin[i] = czEnd + 0.05 + czStep * (double)i;
 		// czBin[i] = czStart - (czStep * 0.5) - czStep * (double)i; // Just for same order in both direction
 	}
 	// czBin[czNbin] = czStart;
-	int azNbin = 12;
 	double azStep = (2.0 * M_PI)/(double)azNbin;
 
 	TH2D *raw1ReEvent[2][6][3];
@@ -1071,9 +1071,11 @@ int main(void)
 		data1RmuTotal[i] = NULL;
 	}
 
-	for(int cz = 0; cz <= czNbin; cz++)
+	// for(int cz = 0; cz <= czNbin; cz++)
+	for(int cz = 0; cz <= 1; cz++)
 	{
-		for(int az = 0; az < azNbin; az++)
+		// for(int az = 0; az < azNbin; az++)
+		for(int az = 0; az < 1; az++)
 		{
 			ffile->ApplyFluxWeights(czBin[cz], az);
 			ffile->ApplyOscillations(czBin[cz]);
@@ -1147,6 +1149,17 @@ int main(void)
 	// int count = 2;
 	// cout << data1ReTotal[0]->GetXaxis()->GetBinCenter(count) << "\t" << data1ReTotal[0]->GetBinContent(count) << endl;
 	// cout << data1RmuTotal[0]->GetXaxis()->GetBinCenter(count) << "\t" << data1RmuTotal[0]->GetBinContent(count) <<endl;
+
+	for(int i = 1; i <= Event2D1Re->GetXaxis()->GetNbins(); i++)
+	{
+		double value = Event2D1Re->GetXaxis()->GetBinCenter(i);
+		cout << i << "\t" << value << endl;
+	}
+	for(int i = 1; i <= Event2D1Re->GetYaxis()->GetNbins(); i++)
+	{
+		double value = Event2D1Re->GetYaxis()->GetBinCenter(i);
+		cout << i << "\t" << value << endl;
+	}
 
 	cout << "nueEvent : " << nueEventTotal << endl;
 	cout << "numuEvent : " << numuEventTotal << endl;

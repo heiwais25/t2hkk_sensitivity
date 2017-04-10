@@ -9,5 +9,5 @@ int main(void)
 
 	string cardFile = "../resources/honda-2015-spl-solmin.d";
 	MakeAtmFlux * flux = new MakeAtmFlux(cardFile);
-	cout << flux->InterpolateFlux(1, 0.1, 0.95, 0, 1) << endl;
+	cout << flux->InterpolateFlux(1, 10000000, 0.97, 0, 2) << endl;
 }

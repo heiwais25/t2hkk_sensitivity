@@ -8,7 +8,7 @@ ROOTLIBS := $(shell root-config --glibs --libs)  -lMinuit -lMinuit2
 ROOTINCLUDES := $(shell root-config --prefix)/include 
 ROOTCFLAGS := $(shell root-config --cflags) -I../include
 
-NUPRISMLIBS := -L../lib -L$(TRACKERFILE_LIB) -L$(OAANALYSISLIBS) -L../../Prob3++ -lOscParams -lSystParams -lMakeHistograms -lThreeProb_2.10 -lThrowParams
+NUPRISMLIBS := -L../lib -L$(TRACKERFILE_LIB) -L$(OAANALYSISLIBS) -L../../Prob3++ -lOscParams -lSystParams -lMakeHistograms -lMakeAtmFlux -lThreeProb_2.10 -lThrowParams
 
 $(TRGS) : $(SRCS)
 $(DICT) : $(SRCS)

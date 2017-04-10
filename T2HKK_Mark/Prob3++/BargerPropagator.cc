@@ -84,24 +84,25 @@ void BargerPropagator::propagate( int NuFlavor )
     Layers = Earth->get_LayersTraversed( );
 
 	
-   for ( i = 0; i < Layers ; i++ )
-   {
-      get_transition_matrix( NuFlavor, 
-                              Energy	,		   // in GeV
-                              Earth->get_DensityInLayer(i) * density_convert, 
-                              Earth->get_DistanceAcrossLayer(i)/1.0e5,   // in km
-                              TransitionMatrix,			   // Output transition matrix
-                              0.0  					   // phase offset 
-                              );			
-      		
-      if ( i == 0 )
-         copy_complex_matrix( TransitionMatrix , TransitionProduct );
+    for ( i = 0; i < Layers ; i++ )
+    {
+        get_transition_matrix( NuFlavor, 
+            Energy	,		   // in GeV
+            Earth->get_DensityInLayer(i) * density_convert, 
+            Earth->get_DistanceAcrossLayer(i)/1.0e5,   // in km
+            TransitionMatrix,			   // Output transition matrix
+            0.0  					   // phase offset 
+        );			
 
-      if ( i >0 ){
-         clear_complex_matrix( TransitionTemp );	
-         multiply_complex_matrix( TransitionMatrix, TransitionProduct, TransitionTemp ); 
-         copy_complex_matrix( TransitionTemp, TransitionProduct );
-      }//for other layers
+        if ( i == 0 )
+            copy_complex_matrix( TransitionMatrix , TransitionProduct );
+
+        if ( i >0 )
+        {
+            clear_complex_matrix( TransitionTemp );	
+            multiply_complex_matrix( TransitionMatrix, TransitionProduct, TransitionTemp ); 
+            copy_complex_matrix( TransitionTemp, TransitionProduct );
+        }//for other layers
     }// end of layer loop
 
 	

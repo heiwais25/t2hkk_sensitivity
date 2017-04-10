@@ -53,18 +53,18 @@ MakeAtmFlux::MakeAtmFlux(string fluxFile)
 			// zenith_Count 		= 0 : 0.90 ~ 1.00 / 19 : -1.0 ~ -0.90
 			// azimuth_Count 		= 0 : 0 ~ 30 / 11 : 330 ~ 360
 			// contents_Count 	= from 0 to 100 (total line is 101)
-			hondaEnergy[zenith_Count][azimuth_Count][contents_Count] 	= carrier[0];
-			hondaNuMu[zenith_Count][azimuth_Count][contents_Count] 	= carrier[1] / pow(10,4);
-			hondaNuMuBar[zenith_Count][azimuth_Count][contents_Count] 	= carrier[2] / pow(10,4);
-			hondaNuE[zenith_Count][azimuth_Count][contents_Count] 		= carrier[3] / pow(10,4);
-			hondaNuEBar[zenith_Count][azimuth_Count][contents_Count] 	= carrier[4] / pow(10,4);
+			hondaEnergy[CosZenith_Length - 1 - zenith_Count][azimuth_Count][contents_Count] 	= carrier[0];
+			hondaNuMu[CosZenith_Length - 1 - zenith_Count][azimuth_Count][contents_Count] 	= carrier[1] / pow(10,4);
+			hondaNuMuBar[CosZenith_Length - 1 - zenith_Count][azimuth_Count][contents_Count] 	= carrier[2] / pow(10,4);
+			hondaNuE[CosZenith_Length - 1 - zenith_Count][azimuth_Count][contents_Count] 		= carrier[3] / pow(10,4);
+			hondaNuEBar[CosZenith_Length - 1 - zenith_Count][azimuth_Count][contents_Count] 	= carrier[4] / pow(10,4);
 			contents_Count++;			
 		}
 	}
 
 	for(int i = 0; i < CosZenith_Length; i++)
 	{
-		cosineZenith[i] = 0.95 - 0.10 * (double)i;
+		cosineZenith[i] = - 0.95 + 0.10 * (double)i;
 	}
 	// int check = 19;
 	// int check2 = 10;
@@ -119,17 +119,7 @@ double MakeAtmFlux::BilinearInterpolation(double Energy, double CosZenith, int A
 	FindProperBin(Energy, CosZenith, &energyNBin, &cosZenithNBin);
 	// cout << energyNBin << "\t" << cosZenithNBin << endl;
 	// cout << "Energy\t" << Energy << "Cosine\t" << CosZenith << endl;
-
-	// for(int i = 0; i < Azimuth_Length; i++)
-	// {
-	// 	cout << "azimuth angle : \t" << i * 30 << "\t" <<
-	// 	 "energy : \t" << hondaEnergy[cosZenithNBin][i][energyNBin] << "\t" <<
-	// 	 "numu flux : \t" << hondaNuMu[cosZenithNBin][i][energyNBin] << "\t" <<
-	// 	 "numubar flux : \t" << hondaNuMuBar[cosZenithNBin][i][energyNBin] << "\t" << 
-	// 	 "nue flux : \t" << hondaNuE[cosZenithNBin][i][energyNBin] << "\t" <<
-	// 	 "nuebar flux : \t" << hondaNuEBar[cosZenithNBin][i][energyNBin] << endl;
-	// }
-
+	// static int value = 0;
 	                    
 	/*=====================================================================================================================================
 	
@@ -148,19 +138,23 @@ double MakeAtmFlux::BilinearInterpolation(double Energy, double CosZenith, int A
 	eBin1 = Energy - hondaEnergy[cosZenithNBin][aValue][energyNBin];
 	eBin2 = hondaEnergy[cosZenithNBin][aValue][energyNBin+1] - Energy;
 
-	// cout << "ebin1 : " << eBin1 << endl;
-	// cout << "ebin2 : " << eBin2 << endl;
+	if((energyNBin == Contents_Length - 1) && (eBin1 == 0)) // In the case larger than maximum value, we fix the value to maximum value(no interpolate)
+	{
+		eBin1 = 0;
+		eBin2 = 1;
+	}
 
+	if(CosZenith < cosineZenith[0]) CosZenith = cosineZenith[0];
+	if(CosZenith > cosineZenith[CosZenith_Length - 1]) CosZenith = cosineZenith[CosZenith_Length - 1];
 
-	if(CosZenith > cosineZenith[0]) CosZenith = cosineZenith[0];
-	if(CosZenith < cosineZenith[CosZenith_Length - 1]) CosZenith = cosineZenith[CosZenith_Length - 1];
+	cBin1 = CosZenith - cosineZenith[cosZenithNBin];
+	cBin2 = cosineZenith[cosZenithNBin + 1] - CosZenith;
 
-	// cout << CosZenith << endl;
-	cBin1 = cosineZenith[cosZenithNBin] - CosZenith;
-	cBin2 = CosZenith - cosineZenith[cosZenithNBin + 1];
-
-	// cout << cBin1 << endl;
-	// cout << cBin2 << endl;
+	if((cosZenithNBin == CosZenith_Length - 1) && (cBin1 == 0)) // In the case larger than maximum value, we fix the value to maximum value(no interpolate)
+	{
+		cBin1 = 0;
+		cBin2 = 1;
+	}
 	
 	if(eBin1 < 0 || eBin2 < 0)
 	{
@@ -170,6 +164,10 @@ double MakeAtmFlux::BilinearInterpolation(double Energy, double CosZenith, int A
 	if(cBin1 < 0 || cBin2 < 0)
 	{
 		cout << "problem in cosine binning!" << endl;
+		cout << "NBin : " << cosZenithNBin << endl;
+		cout << "CosZenith : " << CosZenith << endl;
+		cout << "cBin1 : " << cBin1 << endl;
+		cout << "cBin2 : " << cBin2 << endl;
 		return -1;
 	}
 
@@ -193,14 +191,19 @@ double MakeAtmFlux::BilinearInterpolation(double Energy, double CosZenith, int A
   				+ (eRatio1 * hondaNuE[cosZenithNBin+1][aValue][energyNBin + 1] + eRatio2 * hondaNuE[cosZenithNBin+1][aValue][energyNBin]) * cRatio1;
   	fluxNuEBar = (eRatio1 * hondaNuEBar[cosZenithNBin][aValue][energyNBin + 1] + eRatio2 * hondaNuEBar[cosZenithNBin][aValue][energyNBin]) * cRatio2
   				+ (eRatio1 * hondaNuEBar[cosZenithNBin+1][aValue][energyNBin + 1] + eRatio2 * hondaNuEBar[cosZenithNBin+1][aValue][energyNBin]) * cRatio1;
-  	// if((CosZenith == 0.65)&&(Energy == 0.10))
-  	// {
-  	// cout << "This is certain flux in set energy, cosine \t" <<
-  	// 	"NuMu : " << fluxNuMu << "\t"
-  	// 	"NuMuBar : " << fluxNuMuBar << "\t"
-  	// 	"NuE : " << fluxNuE << "\t"
+  	
+  	// cout << "This is certain flux in set energy, cosine \t" << 
+  	// 	"cz : " << CosZenith << "\t" <<
+  	// 	"e : " << Energy << "\t" << 
+  	// 	"NuMu : " << fluxNuMu << "\t" <<
+  	// 	"NuMuBar : " << fluxNuMuBar << "\t" <<
+  	// 	"NuE : " << fluxNuE << "\t" << 
   	// 	"NuEBar : " << fluxNuEBar << endl;
-  	// }
+	// if(Energy == 0.1)
+	// {
+	// 	value++;
+	// 	cout << "hello : " << value << endl;
+	// }
   	switch(flavor)
   	{
   		case 0:
@@ -244,15 +247,11 @@ void MakeAtmFlux::FindProperBin(double energy, double cosZenith, int * energyNBi
 	 =====================================================================================================================================*/
 	for(int i = 0; i < Contents_Length - 1; i++) // Find certain range includes certain energy
 	{
-		if(energy == hondaEnergy[0][0][0])
+		if(energy <= hondaEnergy[0][0][0]) // Smaller than minimum value
 		{
 			checkEnergyBin = 0;
 		}
-		else if(energy < hondaEnergy[0][0][0])
-		{
-			checkEnergyBin = 0;
-		}
-		else if(energy > hondaEnergy[0][0][Contents_Length - 1])
+		else if(energy > hondaEnergy[0][0][Contents_Length - 1]) // Larger than maximum value
 		{
 			checkEnergyBin = Contents_Length - 1;
 		}
@@ -263,19 +262,15 @@ void MakeAtmFlux::FindProperBin(double energy, double cosZenith, int * energyNBi
 	}
 	for(int i = 0; i < CosZenith_Length; i++) // Find certain range includes certain energy
 	{
-		if(cosZenith == cosineZenith[CosZenith_Length - 1])
-		{
-			checkCosZenithBin = CosZenith_Length - 1;
-		}
-		else if(cosZenith > cosineZenith[0])
+		if(cosZenith <= cosineZenith[0]) // Smaller than minimum value
 		{
 			checkCosZenithBin = 0;
 		}
-		else if(cosZenith < cosineZenith[CosZenith_Length - 1])
+		else if(cosZenith >= cosineZenith[CosZenith_Length - 1]) // Larger than maximum value
 		{
 			checkCosZenithBin = CosZenith_Length - 1;
 		}
-		else if(cosZenith > cosineZenith[i+1] && cosZenith <= cosineZenith[i])
+		else if(cosZenith > cosineZenith[i] && cosZenith <= cosineZenith[i+1])
 		{
 			checkCosZenithBin = i;
 		}

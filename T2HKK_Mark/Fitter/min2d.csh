@@ -10,13 +10,13 @@ cd $workdir
 # 100 bin #
 @ first = $1 / 100
 @ second = $1 % 100
-@ runtime = 1645
+@ runtime = 1659
 #echo "$first + $second"
 # first = $1
 #calc "2*pi"
 set Dect1 = hk
 #echo "$one $other"
-set Dect2 = hk
+set Dect2 = kd_1p5
 # // hk // kd_1p5 // kd_2p0 // kd_2p5 // mt_bisul
 
 # set outdir = /reno/home/sykim/study_T2HKK/T2HKK/output 
@@ -25,14 +25,17 @@ set Dect2 = hk
 #set outdir = /reno/home/sykim/study_T2HKK/T2HKK/comp_nova_min
 set outdir = /reno/home/heiwais25/T2HKK_Mark/combine_source/
 # set outdir = /reno/home/sykim/study_T2HKK/T2HKK/comp_nova_max
-set Type_mode = cpViolationPOT
- #  // cpPrecision  // cpViolation // massHierarchy // sin23Precision // sin23Violation // min2D
+set Type_mode = atm_cpViolation
+ #  // cpPrecision  // cpViolation // massHierarchy // sin23Precision // sin23Violation // min2D  // atm_cpViolation
  #  // min2D_new	// cpViolation_time
 #set output = sin23_prec_mt_bisul.root
 
 #./bin/$Type_mode -c1 input_$Dect2.card  -o $outdir/$Type_mode/$Dect2/output_run_$1.root -co osc_param.card -cs mod_syst_param_total.card -d $1
 
 # ./bin/$Type_mode -c1 input_$Dect1.card -c2 input_$Dect2.card -o $outdir/source_$1_run_1845.root -co osc_param.card -cs syst_param_total.card -y $1
+
+# Atmospheric neutrino flux casse
+./bin/$Type_mode -c1 input_$Dect1.card -c2 input_$Dect2.card -o $outdir/source_$1_run_$runtime.root -co osc_param.card -cs syst_param_total.card -d $1
 
 # Two HK detector case
 ./bin/$Type_mode -c1 input_$Dect1.card -c2 input_$Dect2.card -o $outdir/source_$1_run_$runtime.root -co osc_param.card -cs syst_param_total_2HK.card -y $1

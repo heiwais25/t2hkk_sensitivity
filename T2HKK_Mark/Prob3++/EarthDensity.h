@@ -37,11 +37,11 @@ using namespace std;
 class EarthDensity
 {
 	public:
-                 // default contstructor for the Earth, and a radial density profile 
-                 // as specified by the SK 3f paper: PRD.74.032002 (2006) 
-                 EarthDensity( );
+		// default contstructor for the Earth, and a radial density profile 
+		// as specified by the SK 3f paper: PRD.74.032002 (2006) 
+		EarthDensity( );
                  
-                // constructor for a user-specified density profile, see PREM.dat 
+		// constructor for a user-specified density profile, see PREM.dat 
 		EarthDensity( const char * );
 		virtual ~EarthDensity( );
 
@@ -74,7 +74,7 @@ class EarthDensity
 		double get_DistanceAcrossLayer( int i) { return _TraverseDistance[i];};
 		double get_DensityInLayer( int i) { return _TraverseRhos[i];};
 
-
+		// void GetDensityConvert(double )
                 // return total path length through the sphere, including vacuum layers
                 double get_Pathlength(){ 
 			double Sum = 0.0;
@@ -91,10 +91,10 @@ class EarthDensity
 		// each of the radial layers of the earth
 		void ComputeMinLengthToLayers( );
 
-                string DensityFileName;
+		string DensityFileName;
 			
 		map<double, double>	_CosLimit;
-                map<double, double>	_density;
+		map<double, double>	_density;
 
 		vector< double >	_Radii;
 		vector< double >	_Rhos;

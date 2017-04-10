@@ -10,10 +10,15 @@
 #include "math.h"
 #include "stdlib.h"
 #include "TH1D.h"
+#include "MakeAtmFlux.h"
 
 using namespace std;
 
 MakeHistograms::MakeHistograms(char *cardFile, ProbWrapper *prob, int detid){
+
+  interpolateMode = 0;
+
+  atmFlux = new MakeAtmFlux("/reno/home/heiwais25/T2HKK_Mark/Fitter/Flux/resources/kam-nu-20-12-solmax-with-mt.d");
 
   cout << cardFile << std::endl;
 
@@ -40,6 +45,16 @@ MakeHistograms::MakeHistograms(char *cardFile, ProbWrapper *prob, int detid){
   fluxRatios[1][2] = (TH1D*)fflux->Get("weight_anumode_nue"); 
   fluxRatios[1][3] = (TH1D*)fflux->Get("weight_anumode_nueb");
 
+    fluxSK[0][0] = (TH1D *)fflux->Get("flux_numode_numu");
+    fluxSK[0][1] = (TH1D *)fflux->Get("flux_numode_numub");
+    fluxSK[0][2] = (TH1D *)fflux->Get("flux_numode_nue");
+    fluxSK[0][3] = (TH1D *)fflux->Get("flux_numode_nueb");
+    fluxSK[1][0] = (TH1D *)fflux->Get("flux_anumode_numu");
+    fluxSK[1][1] = (TH1D *)fflux->Get("flux_anumode_numub");
+    fluxSK[1][2] = (TH1D *)fflux->Get("flux_anumode_nue");
+    fluxSK[1][3] = (TH1D *)fflux->Get("flux_anumode_nueb");
+
+
   cout << "Load Raw histograms" << std::endl;
 
   for(int i=0; i<2; i++)
@@ -56,6 +71,14 @@ MakeHistograms::MakeHistograms(char *cardFile, ProbWrapper *prob, int detid){
       raw1Rmu[i][j][0] = (TH2D*)fraw[i][j]->Get("enu_erec_1Rmu_CCQE");
       raw1Rmu[i][j][1] = (TH2D*)fraw[i][j]->Get("enu_erec_1Rmu_CCnQE");
       raw1Rmu[i][j][2] = (TH2D*)fraw[i][j]->Get("enu_erec_1Rmu_NC");
+
+        raw1ReSave[i][j][0] = (TH2D*)raw1Re[i][j][0]->Clone();
+        raw1ReSave[i][j][1] = (TH2D*)raw1Re[i][j][1]->Clone();
+        raw1ReSave[i][j][2] = (TH2D*)raw1Re[i][j][2]->Clone();
+        raw1RmuSave[i][j][0] = (TH2D*)raw1Rmu[i][j][0]->Clone();
+        raw1RmuSave[i][j][1] = (TH2D*)raw1Rmu[i][j][1]->Clone();
+        raw1RmuSave[i][j][2] = (TH2D*)raw1Rmu[i][j][2]->Clone();
+
       raw1ReOsc[i][j][0] = (TH2D*)raw1Re[i][j][0]->Clone(Form("raw1ReOsc_%d%d0",i,j));
       raw1ReOsc[i][j][1] = (TH2D*)raw1Re[i][j][1]->Clone(Form("raw1ReOsc_%d%d1",i,j));
       raw1ReOsc[i][j][2] = (TH2D*)raw1Re[i][j][2]->Clone(Form("raw1ReOsc_%d%d2",i,j));
@@ -118,6 +141,87 @@ void MakeHistograms::ApplyFluxWeights(){
             raw1Rmu[i][j][k]->SetBinContent(xi,yi,raw1Rmu[i][j][k]->GetBinContent(xi,yi)*fweight*mcWeights[i][j]*massWeight*potWeight[i]);
         }
       }
+    }
+}
+
+void MakeHistograms::ApplyFluxWeights(double czBin, int azBin)
+{
+    interpolateMode = 1; // Bilinear
+    for(int i = 0; i < 2; i++) // Initialize each raw file because we need to calculate in each angular bin
+    {
+        for(int j = 0; j < 6; j++)
+        {
+            raw1Re[i][j][0] = (TH2D*)raw1ReSave[i][j][0]->Clone();
+            raw1Re[i][j][1] = (TH2D*)raw1ReSave[i][j][1]->Clone();
+            raw1Re[i][j][2] = (TH2D*)raw1ReSave[i][j][2]->Clone();
+            raw1Rmu[i][j][0] = (TH2D*)raw1RmuSave[i][j][0]->Clone();
+            raw1Rmu[i][j][1] = (TH2D*)raw1RmuSave[i][j][1]->Clone();
+            raw1Rmu[i][j][2] = (TH2D*)raw1RmuSave[i][j][2]->Clone();
+        }
+    }
+    for(int i=0; i<2; i++) 
+    {   
+        if(i == 0)
+        {
+            for(int j=0; j<6; j++)
+            {
+                int flavId = j%4;
+                for(int k=0; k<3; k++)
+                {
+                    for(int xi=1; xi<=raw1Re[i][j][k]->GetNbinsX()+1; xi++)
+                    {
+                        double enu = raw1Re[i][j][k]->GetXaxis()->GetBinCenter(xi);
+                        double ebin = raw1Re[i][j][k]->GetXaxis()->GetBinWidth(xi);
+                        double fAtm = atmFlux->InterpolateFlux(interpolateMode, enu, czBin, azBin, flavId)  * ebin;
+                        int fSKbin = fluxSK[i][flavId]->FindBin(enu);
+                        double fSK = fluxSK[i][flavId]->GetBinContent(fSKbin);
+                        for(int yi=1; yi<=raw1Re[i][j][k]->GetNbinsY()+1; yi++)
+                        {
+                            raw1Re[i][j][k]->SetBinContent(xi,yi,raw1Re[i][j][k]->GetBinContent(xi,yi) * mcWeights[i][j] * (fAtm / fSK) * massWeight * 315360000 * cosineZenithBin * AzimuthBin) ;
+                        }
+                    }
+                    for(int xi=1; xi<=raw1Rmu[i][j][k]->GetNbinsX()+1; xi++)
+                    {
+                        double enu = raw1Rmu[i][j][k]->GetXaxis()->GetBinCenter(xi);
+                        double ebin = raw1Rmu[i][j][k]->GetXaxis()->GetBinWidth(xi);
+                        double fAtm = atmFlux->InterpolateFlux(interpolateMode, enu, czBin, azBin, flavId) * ebin;
+                        int fSKbin = fluxSK[i][flavId]->FindBin(enu);
+                        double fSK = fluxSK[i][flavId]->GetBinContent(fSKbin);
+                        for(int yi=1; yi<=raw1Rmu[i][j][k]->GetNbinsY()+1; yi++)
+                        {
+                            raw1Rmu[i][j][k]->SetBinContent(xi,yi,raw1Rmu[i][j][k]->GetBinContent(xi,yi) * mcWeights[i][j] * (fAtm / fSK) * massWeight * 315360000 * cosineZenithBin * AzimuthBin);
+                        }
+                    }
+                }
+            }
+        }
+        else // no anti-mode in the atmospheric neutrino mode
+        {
+            for(int j = 0; j < 6; j++)
+            {
+                int flavId = j%4;
+                for(int k=0; k<3; k++)
+                {
+
+                    for(int xi=1; xi<=raw1Re[i][j][k]->GetNbinsX()+1; xi++)
+                    {
+                        for(int yi=1; yi<=raw1Re[i][j][k]->GetNbinsY()+1; yi++)
+                        {
+                            raw1Re[i][j][k]->SetBinContent(xi,yi,raw1Re[i][j][k]->GetBinContent(xi,yi) * 0);
+                        }
+                    }
+                
+
+                    for(int xi=1; xi<=raw1Rmu[i][j][k]->GetNbinsX()+1; xi++)
+                    {
+                        for(int yi=1; yi<=raw1Rmu[i][j][k]->GetNbinsY()+1; yi++)
+                        {
+                            raw1Rmu[i][j][k]->SetBinContent(xi,yi,raw1Rmu[i][j][k]->GetBinContent(xi,yi) * 0);
+                        }
+                    }
+                }   
+            }
+        }
     }
 }
 
@@ -356,6 +460,85 @@ void MakeHistograms::ApplyOscillations(){
 }
 
 
+
+void MakeHistograms::ApplyOscillations(double cz)
+{   
+    // cout << "oscillation!!" << endl;
+    double *weightmm = new double[raw1Re[0][0][0]->GetNbinsX()];
+    double *weightmbmb = new double[raw1Re[0][0][0]->GetNbinsX()];
+    double *weightee = new double[raw1Re[0][0][0]->GetNbinsX()];
+    double *weightebeb = new double[raw1Re[0][0][0]->GetNbinsX()];
+    double *weightme = new double[raw1Re[0][0][0]->GetNbinsX()];
+    double *weightmbeb = new double[raw1Re[0][0][0]->GetNbinsX()];
+    for(int xi=1; xi<=raw1Re[0][0][0]->GetNbinsX(); xi++)
+    {
+        double enu = raw1Re[0][0][0]->GetXaxis()->GetBinCenter(xi);
+        weightmm[xi-1] = oscProb->GetProbNuMuNuMu(enu, cz);
+        weightmbmb[xi-1] = oscProb->GetProbNuMuBarNuMuBar(enu, cz);
+        weightee[xi-1] = oscProb->GetProbNuENuE(enu, cz);
+        weightebeb[xi-1] = oscProb->GetProbNuEBarNuEBar(enu, cz);
+        weightme[xi-1] = oscProb->GetProbNuMuNuE(enu, cz);
+        weightmbeb[xi-1] = oscProb->GetProbNuMuBarNuEBar(enu, cz);   
+        // weightmm[xi-1] = 1.0;
+        // weightmbmb[xi-1] = 1.0;
+        // weightee[xi-1] = 1.0;
+        // weightebeb[xi-1] = 1.0;
+        // weightme[xi-1] = 1.0;
+        // weightmbeb[xi-1] = 1.0;
+
+    }
+    
+
+    for(int i=0; i<2; i++)
+    {
+        for(int j=0; j<6; j++)
+        {
+            double *weight1;
+            if(j==0) weight1 = weightmm;
+            else if(j==1) weight1 = weightmbmb;
+            else if(j==2) weight1 = weightee;
+            else if(j==3) weight1 = weightebeb;
+            else if(j==4) weight1 = weightme;
+            else if(j==5) weight1 = weightmbeb;
+            for(int k=0; k<3; k++)
+            {
+
+                for(int xi=1; xi<=raw1Re[i][j][k]->GetNbinsX(); xi++)
+                {
+                    double w = weight1[xi-1];
+                    if(k==2) w = 1.0;
+                    if(k==2 && j>3) w = 0.0;
+                    for(int yi=1; yi<=raw1Re[i][j][k]->GetNbinsY(); yi++) 
+                    {
+                        raw1ReOsc[i][j][k]->SetBinContent(xi,yi,w*raw1Re[i][j][k]->GetBinContent(xi,yi));
+                        // raw1ReOsc[i][j][k]->SetBinContent(xi,yi,raw1Re[i][j][k]->GetBinContent(xi,yi));
+                    }
+                }   
+
+                for(int xi=1; xi<=raw1Rmu[i][j][k]->GetNbinsX(); xi++)
+                {
+                    double w = weight1[xi-1];
+                    if(k==2) w = 1.0;
+                    if(k==2 && j>3) w = 0.0;
+                    for(int yi=1; yi<=raw1Rmu[i][j][k]->GetNbinsY(); yi++)
+                    {
+                        raw1RmuOsc[i][j][k]->SetBinContent(xi,yi,w*raw1Rmu[i][j][k]->GetBinContent(xi,yi));
+                        // raw1RmuOsc[i][j][k]->SetBinContent(xi,yi,raw1Rmu[i][j][k]->GetBinContent(xi,yi));
+                    }
+                }   
+            }
+        }  
+    }
+    delete [] weightmm;
+    delete [] weightmbmb;
+    delete [] weightee;
+    delete [] weightebeb;
+    delete [] weightme;
+    delete [] weightmbeb;
+
+}
+
+
 void MakeHistograms::SaveToFile(char *filename){
  
    TFile *fout = new TFile(filename,"RECREATE");
@@ -543,7 +726,7 @@ void MakeHistograms::GetPredictions(TH1D **hists1Re, TH1D **hists1Rmu, SystParam
          gre->SetPoint(l-1,hists1Re[i]->GetXaxis()->GetBinCenter(l)*escale,hists1Re[i]->GetBinContent(l)/(hists1Re[i]->GetXaxis()->GetBinWidth(l)*escale));
        for(int l=1; l<=hists1Re[i]->GetNbinsX(); l++){
          tmp = gre->Eval(hists1Re[i]->GetXaxis()->GetBinCenter(l),0,"S");
-         std::cout << "tmp value" << tmp << std::endl;
+         // std::cout << "tmp value" << tmp << std::endl;
          if(tmp<0.) tmp = 0.;
          hists1Re[i]->SetBinContent(l,tmp*hists1Re[i]->GetXaxis()->GetBinWidth(l));
        } 

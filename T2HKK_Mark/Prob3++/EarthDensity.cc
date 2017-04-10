@@ -11,13 +11,12 @@ EarthDensity::EarthDensity( )
    _density[ 1220.0 ]  =  13.0 ;
    _density[ 3480.0 ]  =  11.3 ;
    _density[ 5701.0 ]  =  5.0 ;
-   _density[ 6371.0 ]  =  3.3 ;
+   _density[ 6371.0 ]  =  3.3 ;     
 
    _TraverseDistance  = NULL;
    _TraverseRhos      = NULL;
    init();
 
-       
 }
 
 
@@ -30,37 +29,36 @@ EarthDensity::EarthDensity( const char * file )
 
 void EarthDensity::LoadDensityProfile( const char * file )
 {
-        ifstream PREM_dat;
-        double r_dist;          // radial distance -- map key //
-        double rho;             // density at that distance -- map value //
+    ifstream PREM_dat;
+    double r_dist;          // radial distance -- map key //
+    double rho;             // density at that distance -- map value //
+    REarth = 0;
+    DensityFileName = file;
+    // REarth = 6371.0;
+    PREM_dat.open(DensityFileName.c_str());
+    if(! PREM_dat)
+    {
+        cerr<<"EarthDensity::Load ERROR OPENING " << DensityFileName << endl;
+        exit(1);
+    }
+    else
+        cout << "Loading Density profile from: " << DensityFileName << endl;
 
-	DensityFileName = file;
+    while( !PREM_dat.eof( ) )
+    {
+        if ( r_dist > REarth ) REarth = r_dist;
+        PREM_dat >> r_dist >> rho ;
+        _density[r_dist] = rho;
+    }
 
-        PREM_dat.open(DensityFileName.c_str());
-        if(! PREM_dat)
-        {
-                cerr<<"EarthDensity::Load ERROR OPENING " << DensityFileName << endl;
-                exit(1);
-        }
-        else
-           cout << "Loading Density profile from: " << DensityFileName << endl;
-
-        while( !PREM_dat.eof( ) )
-        {
-                if ( r_dist > REarth ) REarth = r_dist;
-                PREM_dat >> r_dist >> rho ;
-                _density[r_dist] = rho;
-        }
-        PREM_dat.close();
-
-        // must be re-initialized after a profile is loaded
-        init();        
+    PREM_dat.close();
+    // must be re-initialized after a profile is loaded
+    init();        
 }
 
 
 void EarthDensity::init()
 {
-
 	Load();
 	ComputeMinLengthToLayers();
 }
@@ -133,6 +131,10 @@ void EarthDensity::SetDensityProfile( double CosineZ, double PathLength , double
 
 
 // now using Zenith angle to compute minimum conditions...20050620 rvw
+/**
+ * EarthDensity::ComputeMinLengthToLayers
+ * @brief Calculate cos limit value to each layer which set in the Load routine
+ */
 void EarthDensity::ComputeMinLengthToLayers()
 {
 	double x;
@@ -152,39 +154,42 @@ void EarthDensity::ComputeMinLengthToLayers()
 
 
 
-
+/**
+ * EarthDensity::Load( )
+ * @brief  In the given density profile, set density value to _Rhos and radius value to _Radii(reversely)
+ */
 void EarthDensity::Load( )
 {
 
-        int MaxDepth = 0;
+    int MaxDepth = 0;
 
-	//map<double, double>::iterator _i;
-	map<double, double>::reverse_iterator _i;
-
-
-      if( _TraverseRhos     != NULL ) delete [] _TraverseRhos;
-      if( _TraverseDistance != NULL ) delete [] _TraverseDistance;
-
-      //_i = _density.end();
-      //_i--;
-      _i = _density.rbegin();
-      REarth = _i->first;  // Earth is 6371.0 [km]
+    //map<double, double>::iterator _i;
+    map<double, double>::reverse_iterator _i;
 
 
-       
-	// to get the densities in order of decreasing radii
-       for( _i = _density.rbegin() ; _i != _density.rend() ; ++_i )
-       {
-	  _Rhos.push_back( _i->second );
-   	  _Radii.push_back( _i->first  );
-	  MaxDepth++;
-       } 
+    if( _TraverseRhos     != NULL ) delete [] _TraverseRhos;
+    if( _TraverseDistance != NULL ) delete [] _TraverseDistance;
+
+    //_i = _density.end();
+    //_i--;
+    _i = _density.rbegin();
+    REarth = _i->first;  // Earth is 6371.0 [km]
 
 
-      _TraverseRhos      = new double [ 2*MaxDepth + 1 ];
-      _TraverseDistance  = new double [ 2*MaxDepth + 1 ];
 
-      return;
+    // to get the densities in order of decreasing radii
+    for( _i = _density.rbegin() ; _i != _density.rend() ; ++_i )
+    {
+        _Rhos.push_back( _i->second );
+        _Radii.push_back( _i->first  );
+        MaxDepth++;
+    } 
+
+
+    _TraverseRhos      = new double [ 2*MaxDepth + 1 ];
+    _TraverseDistance  = new double [ 2*MaxDepth + 1 ];
+
+    return;
                                                                                                                                                              
 }
 

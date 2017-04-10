@@ -81,7 +81,7 @@ class AtmFluxFile
 		TH2D *raw1RmuOsc[2][6][3];
 		TH2D *pred1Re2D[2][6][3];
 		TH2D *pred1Rmu2D[2][6][3];
-		ProbWrapper *oscProb;
+		ProbWrapper * oscProb;
 		MakeAtmFlux * atmFlux;
 		//OscProb *oscProb;
 		double mcWeights[2][6];

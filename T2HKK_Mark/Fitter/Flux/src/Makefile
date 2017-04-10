@@ -28,7 +28,9 @@ libStringParse.a: StringParse.o
 
 
 $(LIBDIR)/libMakeAtmFlux.so: MakeAtmFlux.o StringParse.o
-	$(LD_SHARED) -shared -Wl,-soname,$@,-export-dynamic $(ROOTCFLAGS) -o $@ $^
+	$(LD_SHARED) $(SOFLAGS) $^ -o $@ $(LIB_OBJECTS)
+
+	# $(LD_SHARED) -shared -Wl,-soname,$@,-export-dynamic $(ROOTCFLAGS) -o $@ $^
 
 
 clean:
